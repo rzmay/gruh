@@ -1,0 +1,18 @@
+extends layout
+
+block content
+  p Please enable webgl
+
+  div#blocker
+    button#start enter
+  div#container
+
+
+  script(src='https://unpkg.com/sfmediastream@latest/dist/SFMediaStream.min.js')
+  script(src='/socket.io/socket.io.js')
+
+  script(src='lib/zlib.min.js')
+  script(src='lib/three.min.js')
+  script(src='lib/GLTFLoader.js')
+  script(src='lib/OrbitControls.js')
+  script(src='javascripts/index.js')
