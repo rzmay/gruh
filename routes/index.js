@@ -32,7 +32,7 @@ function sendSound() {
   soundPath = paths[Math.floor(Math.random()*paths.length)];
 
   // Override
-  // soundPath = '../audio/jude_laughing.mp3';
+  soundPath = '../audio/jude_laughing.mp3';
 
   let b64 = base64_encode(soundPath);
   io.emit('playSound', b64);
