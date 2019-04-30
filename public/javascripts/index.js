@@ -12,7 +12,7 @@ function start() {
 		global.analyser = analyser;
 		global.audioContext = audioCtx;
 	}
-
+	
 	function playSound(b64) {
 		console.log(b64);
 
@@ -118,7 +118,7 @@ function start() {
 			// called when loading has errors
 			function (error) {
 
-				console.log('An error happened');
+				console.log('An error happened:' + error);
 
 			}
 		);
@@ -129,7 +129,7 @@ function start() {
 			const pointLight =
 				new THREE.PointLight(0xFFFFFF);
 
-// set its position
+			// set its position
 			pointLight.position.x = transforms[i].x;
 			pointLight.position.y = transforms[i].y;
 			pointLight.position.z = transforms[i].z;
@@ -163,6 +163,33 @@ function start() {
 		gruh.traverse( function ( node ) {
 			if ( node.isMesh ){
 				node.morphTargetInfluences[0] = amount;
+			}
+		} );
+	}
+
+	function setLeftEyeClosed(amount, gruh) {
+		if (!gruh) return;
+		gruh.traverse( function ( node ) {
+			if ( node.isMesh ){
+				node.morphTargetInfluences[3] = amount;
+			}
+		} );
+	}
+
+	function setRightEyeClosed(amount, gruh) {
+		if (!gruh) return;
+		gruh.traverse( function ( node ) {
+			if ( node.isMesh ){
+				node.morphTargetInfluences[2] = amount;
+			}
+		} );
+	}
+
+	function setEyebrowsRaised(amount, gruh) {
+		if (!gruh) return;
+		gruh.traverse( function ( node ) {
+			if ( node.isMesh ){
+				node.morphTargetInfluences[1] = amount;
 			}
 		} );
 	}
