@@ -158,6 +158,18 @@ function start() {
 		return (average / 100.0) > 1 ? 1.0 : (average / 100.0);
 	}
 
+	function getEyeInfluence(time) {
+		let timeDiff = global.millis - time;
+		let blinkTime = 350;
+
+		return {
+			quadratic: Math.max(0, -1 * ((1/blinkTime) * (timeDiff-blinkTime))**2 + 1),
+			linear: Math.max(0, 1 - Math.abs(1 - timeDiff/blinkTime)),
+			sinusoidal: timeDiff > blinkTime ? 0 : 0.5*Math.sin(((2*Math.PI)/blinkTime)*(timeDiff-(blinkTime/4)))+0.5,
+
+		}
+	}
+
 	function setMouthOpen(amount, gruh) {
 		if (!gruh) return;
 		gruh.traverse( function ( node ) {
@@ -223,11 +235,16 @@ function start() {
 
 		function update() {
 			// Draw!
+			global.millis = new Date().getTime();
+
 			renderer.render(scene, camera);
 
 			controls.update();
 
 			setMouthOpen(getMouthInfluence(global.analyser), gruh);
+
+			setLeftEyeClosed(getEyeInfluence(global.blinkEyeLeftTime).sinusoidal, gruh);
+			setRightEyeClosed(getEyeInfluence(global.blinkEyeRightTime).sinusoidal, gruh);
 
 			// Schedule the next frame.
 			requestAnimationFrame(update);
@@ -244,6 +261,14 @@ function start() {
 	socket.on('playSound', (b64)=>{
 		console.log('sound');
 		playSound(b64);
+	});
+
+	socket.on('blinkEyeLeft', ()=>{
+		global.blinkEyeLeftTime = global.millis;
+	});
+
+	socket.on('blinkEyeRight', ()=>{
+		global.blinkEyeRightTime = global.millis;
 	});
 
 	render();
