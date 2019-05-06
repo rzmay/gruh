@@ -11,6 +11,8 @@ function start() {
 
 		global.analyser = analyser;
 		global.audioContext = audioCtx;
+		global.lastAudio = 0;
+		global.eyebrowHeight = 0;
 	}
 	
 	function playSound(b64) {
@@ -139,7 +141,7 @@ function start() {
 		}
 	}
 
-	function getMouthInfluence(analyser) {
+	function getVolume(analyser) {
 		let typedFreqData = new Uint8Array(analyser.frequencyBinCount);
 
 		analyser.getByteFrequencyData(typedFreqData);
@@ -147,7 +149,10 @@ function start() {
 		let freqData = Array.from(typedFreqData);
 
 		// average volume
-		const average = freqData.reduce( ( p, c ) => p + c, 0 ) / freqData.length;
+		return freqData.reduce( ( p, c ) => p + c, 0 ) / freqData.length;
+	}
+
+	function getMouthInfluence(average) {
 
 		// let styled = ((Math.pow(101, average/100) - 1) / 100.0);
 		// let capped = styled > 1.0 ? 1.0 : styled;
@@ -155,7 +160,18 @@ function start() {
 		// return capped;
 
 		// Average of freqData
-		return (average / 100.0) > 1 ? 1.0 : (average / 100.0);
+		return Math.min(average / 100.0, 1);
+	}
+
+	function changeEyebrowInfluence(average) {
+
+		let volChange = Math.min(Math.abs(average - global.lastAudio) / global.dt * 40, 1) || 0;
+		
+		console.log(volChange - global.eyebrowHeight);
+
+		global.eyebrowHeight += (volChange - global.eyebrowHeight) * .1 * global.dt;
+
+		global.lastAudio = average;
 	}
 
 	function getEyeInfluence(time) {
@@ -218,6 +234,8 @@ function start() {
 
 		let gruh;
 
+		global.dt = 16;
+
 		addMesh(scene, (mesh) => {
 			gruh = mesh;
 		});
@@ -235,13 +253,20 @@ function start() {
 
 		function update() {
 			// Draw!
-			global.millis = new Date().getTime();
+			let ct = new Date().getTime();
+			global.dt = ct - global.millis;
+			global.millis = ct;
 
 			renderer.render(scene, camera);
 
 			controls.update();
 
-			setMouthOpen(getMouthInfluence(global.analyser), gruh);
+			let vol = getVolume(global.analyser);
+
+			setMouthOpen(getMouthInfluence(vol), gruh);
+
+			changeEyebrowInfluence(vol);
+			setEyebrowsRaised(global.eyebrowHeight, gruh);
 
 			setLeftEyeClosed(getEyeInfluence(global.blinkEyeLeftTime).sinusoidal, gruh);
 			setRightEyeClosed(getEyeInfluence(global.blinkEyeRightTime).sinusoidal, gruh);
