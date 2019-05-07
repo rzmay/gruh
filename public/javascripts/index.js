@@ -182,7 +182,7 @@ function start() {
 		global.lastVolume = volume;
 
 		// Set target to multiple of 1/intervals
-		let intervals = 4;
+		let intervals = 6;
 		target = Math.round(target * intervals) / intervals;
 
 		target = target > 1 ? 1.0 : (target < 0 ? 0 : target);

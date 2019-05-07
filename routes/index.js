@@ -50,7 +50,6 @@ function doBlink() {
   setTimeout(()=>{blinkEye('Left')}, (Math.random() * 0.2 * 1000));
   setTimeout(()=>{blinkEye('Right')}, (Math.random() * 0.2 * 1000));
 
-  console.log(((Math.random() * 2) +  3) * 1000);
   setTimeout(doBlink, ((Math.random() * 3) +  5) * 1000);
 }
 
