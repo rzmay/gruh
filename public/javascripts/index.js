@@ -13,6 +13,7 @@ function start() {
 		global.audioContext = audioCtx;
 		global.lastAudio = 0;
 		global.eyebrowHeight = 0;
+		global.volumeInterp = 0;
 	}
 	
 	function playSound(b64) {
@@ -247,6 +248,7 @@ function start() {
 		let gruh;
 
 		global.dt = 16;
+		global.millis = new Date().getTime();
 
 		addMesh(scene, (mesh) => {
 			gruh = mesh;
@@ -274,10 +276,11 @@ function start() {
 			controls.update();
 
 			let vol = getVolume(global.analyser);
+			global.volumeInterp += (vol - global.volumeInterp) * .01 * global.dt;
 
-			setMouthOpen(getMouthInfluence(vol), gruh);
+			setMouthOpen(getMouthInfluence(global.volumeInterp), gruh);
 
-			setEyebrowsRaised(getEyebrowInfluence(vol), gruh);
+			setEyebrowsRaised(getEyebrowInfluence(global.volumeInterp), gruh);
 
 			setLeftEyeClosed(getEyeInfluence(global.blinkEyeLeftTime).sinusoidal, gruh);
 			setRightEyeClosed(getEyeInfluence(global.blinkEyeRightTime).sinusoidal, gruh);
