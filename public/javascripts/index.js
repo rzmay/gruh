@@ -15,6 +15,59 @@ function start() {
 		global.eyebrowHeight = 0;
 		global.volumeInterp = 0;
 	}
+
+	class ParticleSystem {
+
+		constructor(lifetime, ) {
+
+			this.lifetime = lifetime;
+			this.particles = [];
+
+			// particle = [startTime, posx, posy, velx, vely]
+			this.particleParams = [];
+
+		}
+
+		createParticle(posx, posy, velx, vely) {
+			return [global.millis, posx, posy, velx || 0, vely || 0];
+		}
+
+		addParticles(amt, posx, posy, deviation, velx, vely) {
+			for (i in amt) {
+				this.particles += createParticle(posx + (Math.random() - .5) * deviation, posy + (Math.random() - .5) * deviation, velx, vely);
+			}
+		}
+
+		applyParticleForces() {}
+		// specific per particle system, including drag
+
+		updateParticles(dt) {
+			let i = this.particles.length - 1;
+			let millis = global.millis;
+			while (i--) {
+				if (millis - this.particles[i][0] > this.lifetime) {
+					this.particles.splice(i,1);
+				} else {
+					let particle = this.particles[i];
+					particle[1] += particle[3];
+					particle[2] += particle[4];
+				}
+				applyParticleForces();
+			}
+
+			// drawParticles();
+		}
+
+		drawParticles() {}
+
+	}
+
+	function setUpParticleSystems() {
+		global.particles = {};
+		
+
+
+	}
 	
 	function playSound(b64) {
 		console.log(b64);
