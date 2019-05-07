@@ -13,6 +13,7 @@ function start() {
 		global.audioContext = audioCtx;
 		global.lastAudio = 0;
 		global.eyebrowHeight = 0;
+		global.volumeInterp = 0;
 	}
 	
 	function playSound(b64) {
@@ -165,11 +166,9 @@ function start() {
 
 	function changeEyebrowInfluence(average) {
 
-		let volChange = Math.min(Math.abs(average - global.lastAudio) / global.dt * 40, 1) || 0;
-		
-		console.log(volChange - global.eyebrowHeight);
+		let volChange = Math.min(Math.max(average - global.lastAudio, 0) / global.dt * 10, 1) || 0;
 
-		global.eyebrowHeight += (volChange - global.eyebrowHeight) * .1 * global.dt;
+		global.eyebrowHeight += (volChange - global.eyebrowHeight) * .003 * global.dt;
 
 		global.lastAudio = average;
 	}
@@ -235,6 +234,7 @@ function start() {
 		let gruh;
 
 		global.dt = 16;
+		global.millis = new Date().getTime();
 
 		addMesh(scene, (mesh) => {
 			gruh = mesh;
@@ -262,10 +262,11 @@ function start() {
 			controls.update();
 
 			let vol = getVolume(global.analyser);
+			global.volumeInterp += (vol - global.volumeInterp) * .01 * global.dt;
 
-			setMouthOpen(getMouthInfluence(vol), gruh);
+			setMouthOpen(getMouthInfluence(global.volumeInterp), gruh);
 
-			changeEyebrowInfluence(vol);
+			changeEyebrowInfluence(global.volumeInterp);
 			setEyebrowsRaised(global.eyebrowHeight, gruh);
 
 			setLeftEyeClosed(getEyeInfluence(global.blinkEyeLeftTime).sinusoidal, gruh);
