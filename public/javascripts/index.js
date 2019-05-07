@@ -202,7 +202,7 @@ function start() {
 	function changeEyebrowInfluence(volume) {
 		let volChange = Math.min(Math.max(volume - global.lastAudio, 0) / global.dt * 10, 1) || 0;
 
-		global.eyebrowHeight += (volChange - global.eyebrowHeight) * .003 * global.dt;
+		global.eyebrowHeight = Math.min(global.eyebrowHeight + (volChange - global.eyebrowHeight) * .003 * global.dt, 1);
 
 		global.lastAudio = volume;
 	}
