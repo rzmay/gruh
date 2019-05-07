@@ -185,12 +185,13 @@ function start() {
 		let intervals = 4;
 		target = Math.round(target * intervals) / intervals;
 
-		// Only use volume shifts above 0.5; double result of target - 0.5
 		target = target > 1 ? 1.0 : (target < 0 ? 0 : target);
-		target = Math.max(0, (target - 0.5) * 4);
+		// Only use volume shifts above 0.5; double result of target - 0.5 (actually do not)
+		// target = Math.max(0, (target - 0.5) * 2);
+		console.log(target);
 
 		// s = inverse speed, amount that difference is divided
-		let s = 20;
+		let s = 10;
 		let current = global.currentEyebrowInfluence || 0;
 		let next = current + ((target - current/ 2) / s);
 		next = next > 1 ? 1.0 : (next < 0 ? 0 : next);
