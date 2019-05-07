@@ -11,6 +11,8 @@ function start() {
 
 		global.analyser = analyser;
 		global.audioContext = audioCtx;
+		global.lastAudio = 0;
+		global.eyebrowHeight = 0;
 	}
 	
 	function playSound(b64) {
@@ -147,11 +149,10 @@ function start() {
 		let freqData = Array.from(typedFreqData);
 
 		// average volume
-		return average = freqData.reduce( ( p, c ) => p + c, 0 ) / freqData.length;
+		return freqData.reduce( ( p, c ) => p + c, 0 ) / freqData.length;
 	}
 
-	function getMouthInfluence(analyser) {
-		const average = getVolume(analyser);
+	function getMouthInfluence(volume) {
 
 		// let styled = ((Math.pow(101, average/100) - 1) / 100.0);
 		// let capped = styled > 1.0 ? 1.0 : styled;
@@ -159,7 +160,7 @@ function start() {
 		// return capped;
 
 		// Average of freqData
-		return (average / 100.0) > 1 ? 1.0 : (average / 100.0);
+		return Math.min(volume / 100.0, 1);
 	}
 
 	function getEyeInfluence(time) {
@@ -174,10 +175,7 @@ function start() {
 		}
 	}
 
-	function getEyebrowInfluence(analyser) {
-		// Get volume
-		let volume = getVolume(analyser);
-
+	function getEyebrowInfluence(volume) {
 		// Calculate target and set lastVolume
 		let target = ((volume - (global.lastVolume || 0))/ 5);
 		global.lastVolume = volume;
@@ -248,6 +246,8 @@ function start() {
 
 		let gruh;
 
+		global.dt = 16;
+
 		addMesh(scene, (mesh) => {
 			gruh = mesh;
 		});
@@ -265,18 +265,22 @@ function start() {
 
 		function update() {
 			// Draw!
-			global.millis = new Date().getTime();
+			let ct = new Date().getTime();
+			global.dt = ct - global.millis;
+			global.millis = ct;
 
 			renderer.render(scene, camera);
 
 			controls.update();
 
-			setMouthOpen(getMouthInfluence(global.analyser), gruh);
+			let vol = getVolume(global.analyser);
+
+			setMouthOpen(getMouthInfluence(vol), gruh);
+
+			setEyebrowsRaised(getEyebrowInfluence(vol), gruh);
 
 			setLeftEyeClosed(getEyeInfluence(global.blinkEyeLeftTime).sinusoidal, gruh);
 			setRightEyeClosed(getEyeInfluence(global.blinkEyeRightTime).sinusoidal, gruh);
-
-			setEyebrowsRaised(getEyebrowInfluence(global.analyser), gruh);
 
 			// Schedule the next frame.
 			requestAnimationFrame(update);
