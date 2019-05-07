@@ -139,7 +139,7 @@ function start() {
 		}
 	}
 
-	function getMouthInfluence(analyser) {
+	function getVolume(analyser) {
 		let typedFreqData = new Uint8Array(analyser.frequencyBinCount);
 
 		analyser.getByteFrequencyData(typedFreqData);
@@ -147,7 +147,11 @@ function start() {
 		let freqData = Array.from(typedFreqData);
 
 		// average volume
-		const average = freqData.reduce( ( p, c ) => p + c, 0 ) / freqData.length;
+		return average = freqData.reduce( ( p, c ) => p + c, 0 ) / freqData.length;
+	}
+
+	function getMouthInfluence(analyser) {
+		const average = getVolume(analyser);
 
 		// let styled = ((Math.pow(101, average/100) - 1) / 100.0);
 		// let capped = styled > 1.0 ? 1.0 : styled;
@@ -168,6 +172,32 @@ function start() {
 			sinusoidal: timeDiff > blinkTime ? 0 : 0.5*Math.sin(((2*Math.PI)/blinkTime)*(timeDiff-(blinkTime/4)))+0.5,
 
 		}
+	}
+
+	function getEyebrowInfluence(analyser) {
+		// Get volume
+		let volume = getVolume(analyser);
+
+		// Calculate target and set lastVolume
+		let target = ((volume - (global.lastVolume || 0))/ 5);
+		global.lastVolume = volume;
+
+		// Set target to multiple of 1/intervals
+		let intervals = 4;
+		target = Math.round(target * intervals) / intervals;
+
+		// Only use volume shifts above 0.5; double result of target - 0.5
+		target = target > 1 ? 1.0 : (target < 0 ? 0 : target);
+		target = Math.max(0, (target - 0.5) * 4);
+
+		// s = inverse speed, amount that difference is divided
+		let s = 20;
+		let current = global.currentEyebrowInfluence || 0;
+		let next = current + ((target - current/ 2) / s);
+		next = next > 1 ? 1.0 : (next < 0 ? 0 : next);
+
+		global.currentEyebrowInfluence = next;
+		return next;
 	}
 
 	function setMouthOpen(amount, gruh) {
@@ -245,6 +275,8 @@ function start() {
 
 			setLeftEyeClosed(getEyeInfluence(global.blinkEyeLeftTime).sinusoidal, gruh);
 			setRightEyeClosed(getEyeInfluence(global.blinkEyeRightTime).sinusoidal, gruh);
+
+			setEyebrowsRaised(getEyebrowInfluence(global.analyser), gruh);
 
 			// Schedule the next frame.
 			requestAnimationFrame(update);
