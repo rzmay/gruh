@@ -176,27 +176,35 @@ function start() {
 		}
 	}
 
-	function getEyebrowInfluence(volume) {
-		// Calculate target and set lastVolume
-		let target = ((volume - (global.lastVolume || 0))/ 5);
-		global.lastVolume = volume;
+	// function getEyebrowInfluence(volume) {
+	// 	// Calculate target and set lastVolume
+	// 	let target = ((volume - (global.lastVolume || 0))/ 5);
+	// 	global.lastVolume = volume;
 
-		// Set target to multiple of 1/intervals
-		let intervals = 4;
-		target = Math.round(target * intervals) / intervals;
+	// 	// Set target to multiple of 1/intervals
+	// 	let intervals = 4;
+	// 	target = Math.round(target * intervals) / intervals;
 
-		// Only use volume shifts above 0.5; double result of target - 0.5
-		target = target > 1 ? 1.0 : (target < 0 ? 0 : target);
-		target = Math.max(0, (target - 0.5) * 4);
+	// 	// Only use volume shifts above 0.5; double result of target - 0.5
+	// 	target = target > 1 ? 1.0 : (target < 0 ? 0 : target);
+	// 	target = Math.max(0, (target - 0.5) * 4);
 
-		// s = inverse speed, amount that difference is divided
-		let s = 20;
-		let current = global.currentEyebrowInfluence || 0;
-		let next = current + ((target - current/ 2) / s);
-		next = next > 1 ? 1.0 : (next < 0 ? 0 : next);
+	// 	// s = inverse speed, amount that difference is divided
+	// 	let s = 20;
+	// 	let current = global.currentEyebrowInfluence || 0;
+	// 	let next = current + ((target - current/ 2) / s);
+	// 	next = next > 1 ? 1.0 : (next < 0 ? 0 : next);
 
-		global.currentEyebrowInfluence = next;
-		return next;
+	// 	global.currentEyebrowInfluence = next;
+	// 	return next;
+	// }
+
+	function changeEyebrowInfluence(volume) {
+		let volChange = Math.min(Math.max(volume - global.lastAudio, 0) / global.dt * 10, 1) || 0;
+
+		global.eyebrowHeight += (volChange - global.eyebrowHeight) * .003 * global.dt;
+
+		global.lastAudio = volume;
 	}
 
 	function setMouthOpen(amount, gruh) {
@@ -280,7 +288,8 @@ function start() {
 
 			setMouthOpen(getMouthInfluence(global.volumeInterp), gruh);
 
-			setEyebrowsRaised(getEyebrowInfluence(global.volumeInterp), gruh);
+			changeEyebrowInfluence(global.volumeInterp);
+			setEyebrowsRaised(global.eyebrowHeight, gruh);
 
 			setLeftEyeClosed(getEyeInfluence(global.blinkEyeLeftTime).sinusoidal, gruh);
 			setRightEyeClosed(getEyeInfluence(global.blinkEyeRightTime).sinusoidal, gruh);
