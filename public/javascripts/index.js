@@ -16,12 +16,13 @@ function start() {
 		global.volumeInterp = 0;
 	}
 	
-	function playSound(b64) {
+	function playSound(b64, startTime) {
 		console.log(b64);
 
 		var sound = new Audio("data:audio/wav;base64," + b64);
 		sound.id = 'audio';
-		sound.controls = false;;
+		sound.controls = false;
+		sound.currentTime = startTime / 1000;
 		sound.type = 'audio/mp3';
 		sound.autoplay = true;
 
@@ -161,7 +162,7 @@ function start() {
 		// return capped;
 
 		// Average of freqData
-		return Math.min(volume / 100.0, 1);
+		return Math.max(0, Math.min(volume / 100.0, 1));
 	}
 
 	function getEyeInfluence(time) {
@@ -298,9 +299,9 @@ function start() {
 		forceNew: true
 	});
 
-	socket.on('playSound', (b64)=>{
+	socket.on('playSound', (b64, startTime)=>{
 		console.log('sound');
-		playSound(b64);
+		playSound(b64, startTime);
 	});
 
 	socket.on('blinkEyeLeft', ()=>{
