@@ -88,7 +88,7 @@ function start() {
 
 		global.canvas = document.getElementById("container").childNodes[0];
 
-		global.embers = new ParticleSystem(5000);
+		global.embers = new ParticleSystem(6000);
 
 		global.embers.applyParticleForces = function(dt, particle) {
 			particle[3] += dt * .00001 * (Math.sin(particle[1]/3) + Math.cos(particle[2]/2));
@@ -100,13 +100,14 @@ function start() {
 		};
 
 		global.embers.adjustParticleLooks = function(particle, lifetime) {
-			particle[5].material.opacity = 1 - (global.millis - particle[0]) / lifetime;
-			particle[5].material.color = {r: 1, g: 1 - (global.millis - particle[0]) / lifetime * 1.5, b: 0};
+			let thing = (global.millis - particle[0]) / lifetime;
+			particle[5].material.opacity = 1 - thing;
+			particle[5].material.color = {r: 1, g: 1 - thing * 1.5, b: .1};
 		}
 
 		// global.embers.setSpawnInterval(10, 700, 200, 0, 400, 10);
 		setInterval(function() {
-			global.embers.addParticles(scene, 2, 0, -17, 60, 4, 0, .01);
+			global.embers.addParticles(scene, 2, 0, -17, 60, 4, 0, 0);
 		}, 200);
 
 	}
