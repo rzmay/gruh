@@ -33,7 +33,6 @@ function start() {
 
 		addParticles(amt, posx, posy, deviationx, deviationy, velx, vely) {
 			for (let i = 0; i < amt; i++) {
-				console.log('added');
 				this.particles.push(this.createParticle(posx + (Math.random() - .5) * deviationx, posy + (Math.random() - .5) * deviationy, velx, vely));
 			}
 		}
@@ -52,11 +51,9 @@ function start() {
 				let particle = this.particles[i];
 				if (millis - particle[0] > this.lifetime) {
 					this.particles.splice(i, 0);
-					console.log("particle deleted at " + i);
 				} else {
 					particle[1] += particle[3] * dt;
 					particle[2] += particle[4] * dt;
-					console.log(`particle updated at ${particle[1]}, ${particle[2]}`)
 				}
 			}
 			this.applyParticleForces();
