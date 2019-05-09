@@ -18,22 +18,33 @@ function start() {
 
 	class ParticleSystem {
 
-		constructor(lifetime, ) {
+		constructor(lifetime) {
 
+			this.radius = .1;
+			this.segments = 7;
 			this.lifetime = lifetime;
 			this.particles = [];
 
-			// particle = [startTime, posx, posy, velx, vely]
+			// particle = [startTime, posx, posy, velx, vely, object]
 
 		}
 
-		createParticle(posx, posy, velx, vely) {
-			return Array(global.millis, posx, posy, velx || 0, vely || 0);
+		createParticle(scene, posx, posy, velx, vely) {
+			var geometry = new THREE.CircleGeometry(this.radius, this.segments);
+			var material = new THREE.MeshBasicMaterial();
+			material.transparent = true;
+			var mesh = new THREE.Mesh(geometry, material);
+			mesh.position.y = Math.random() * 20 - 10;
+			mesh.rotation.x = Math.PI/2;
+			scene.add(mesh);
+			return Array(global.millis, posx, posy, velx || 0, vely || 0, mesh);
+
+			// TODO: IF WE CAN RAW DRAW 2D STUFF THIS CAN GO AND WE CAN JUST DRAW ALL THE PARTICLES IN ONE FUNC
 		}
 
-		addParticles(amt, posx, posy, deviationx, deviationy, velx, vely) {
+		addParticles(scene, amt, posx, posy, deviationx, deviationy, velx, vely) {
 			for (let i = 0; i < amt; i++) {
-				this.particles.push(this.createParticle(posx + (Math.random() - .5) * deviationx, posy + (Math.random() - .5) * deviationy, velx, vely));
+				this.particles.push(this.createParticle(scene, posx + (Math.random() - .5) * deviationx, posy + (Math.random() - .5) * deviationy, velx, vely));
 			}
 		}
 
@@ -43,35 +54,60 @@ function start() {
 		// 	}, interval);
 		// }
 
-		applyParticleForces() {}
+		applyParticleForces(dt, particle) {}
 		// specific per particle system, including drag
 
-		updateParticles(millis, dt) {
+		updateParticles(millis, dt, scene) {
 			for (let i = this.particles.length - 1; i >= 0; i--) {
 				let particle = this.particles[i];
 				if (millis - particle[0] > this.lifetime) {
+					scene.remove(this.particles[i][5]);
 					this.particles.splice(i, 0);
 				} else {
+					this.applyParticleForces(dt, particle);
 					particle[1] += particle[3] * dt;
 					particle[2] += particle[4] * dt;
+
+					particle[5].position.x = particle[1];
+					particle[5].position.z = particle[2];
+
+					this.adjustParticleLooks(particle, this.lifetime);
 				}
 			}
-			this.applyParticleForces();
+			// console.log(this.particles[0]);
 
 			// this.drawParticles();
 		}
 
-		drawParticles() {}
+		adjustParticleLooks(particle, lifetime) {}
+		// specific per particle
 
 	}
 
-	function setUpParticleSystems() {
-		global.embers = new ParticleSystem(1000);
+	function setUpParticleSystems(scene) {
+
+		global.canvas = document.getElementById("container").childNodes[0];
+
+		global.embers = new ParticleSystem(5000);
+
+		global.embers.applyParticleForces = function(dt, particle) {
+			particle[3] += dt * .00001 * (Math.sin(particle[1]/3) + Math.cos(particle[2]/2));
+			particle[4] += dt * .00002 * (Math.sin(particle[2]) + Math.cos(particle[1]));
+
+			particle[3] *= .9;
+			particle[4] += .0007;
+			particle[4] *= .9;
+		};
+
+		global.embers.adjustParticleLooks = function(particle, lifetime) {
+			particle[5].material.opacity = 1 - (global.millis - particle[0]) / lifetime;
+			particle[5].material.color = {r: 1, g: 1 - (global.millis - particle[0]) / lifetime * 1.5, b: 0};
+		}
 
 		// global.embers.setSpawnInterval(10, 700, 200, 0, 400, 10);
 		setInterval(function() {
-			global.embers.addParticles(10, 400, 0, 800, 10);
-		}, 700);
+			global.embers.addParticles(scene, 2, 0, -17, 60, 4, 0, .01);
+		}, 200);
 
 	}
 	
@@ -322,7 +358,7 @@ function start() {
 		setUpAudioContext();
 
 		// set up embers
-		setUpParticleSystems();
+		setUpParticleSystems(scene);
 
 		// Attach the renderer-supplied
 		// DOM element.
@@ -349,7 +385,7 @@ function start() {
 			setRightEyeClosed(getEyeInfluence(global.blinkEyeRightTime).sinusoidal, gruh);
 
 			// update particle system
-			global.embers.updateParticles(global.millis, global.dt);
+			global.embers.updateParticles(global.millis, global.dt, scene);
 
 			// Schedule the next frame.
 			requestAnimationFrame(update);
