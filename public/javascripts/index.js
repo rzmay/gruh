@@ -94,9 +94,9 @@ function start() {
 			particle[3] += dt * .00001 * (Math.sin(particle[1]/3) + Math.cos(particle[2]/2));
 			particle[4] += dt * .00002 * (Math.sin(particle[2]) + Math.cos(particle[1]));
 
-			particle[3] *= .9;
-			particle[4] += .0007;
-			particle[4] *= .9;
+			particle[3] *= .99 ** dt;
+			particle[4] += .00005 * dt;
+			particle[4] *= .99 ** dt;
 		};
 
 		global.embers.adjustParticleLooks = function(particle, lifetime) {
