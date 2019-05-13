@@ -1,8 +1,11 @@
-function start() {
+// Set up graphics to connect to audio
+
+let global = {};
+
+global.onstart = [];
+global.onstart.push(function () {
 	const WIDTH = window.innerWidth;
 	const HEIGHT = window.innerHeight + 20;
-
-	let global = {};
 
 	function setUpAudioContext() {
 		var audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -111,8 +114,8 @@ function start() {
 		}, 200);
 
 	}
-	
-	function playSound(b64, startTime) {
+
+	global.playSound = function (b64, startTime) {
 		console.log(b64);
 
 		var sound = new Audio("data:audio/wav;base64," + b64);
@@ -302,7 +305,7 @@ function start() {
 		let squintInfluence2 = avg / 255;
 
 		// Use whichever is greater for the most effect
-		let squintInfluence = Math.max(squintInfluence1, squintInfluence2);
+		let squintInfluence = Math.min(Math.max(Math.max(squintInfluence1, squintInfluence2), 0), 0.5);
 
 		return squintInfluence;
 	}
@@ -450,28 +453,18 @@ function start() {
 		requestAnimationFrame(update);
 	}
 
-	let socket = io.connect('/', {
-		forceNew: true
-	});
-
-	socket.on('playSound', (b64, startTime)=>{
-		console.log('sound');
-		playSound(b64, startTime);
-	});
-
-	socket.on('blinkEyeLeft', ()=>{
-		global.blinkEyeLeftTime = global.millis;
-	});
-
-	socket.on('blinkEyeRight', ()=>{
-		global.blinkEyeRightTime = global.millis;
-	});
-
 	render();
-}
+});
+
+global.start = function() {
+	for (let i = 0; i < global.onstart.length; i++) {
+		global.onstart[i]();
+	}
+};
 
 document.getElementById('start').onclick = () => {
 	let elem = document.getElementById('blocker');
 	elem.parentNode.removeChild(elem);
-	start();
+
+	global.start()
 };

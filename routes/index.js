@@ -13,7 +13,11 @@ var soundPath = '../audio/sound.mp3';
 
 /* GET home page. */
 router.get('/', function(req, res, next) {
-  res.render('index', { title: 'Express' });
+  res.render('index', { title: 'Gruh', main: true });
+});
+
+router.get('/speak', function(req, res, next) {
+  res.render('index', { title: 'Gruh', main: false});
 });
 
 io.on('connect', (socket) => {
