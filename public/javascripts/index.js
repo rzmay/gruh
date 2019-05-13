@@ -18,54 +18,97 @@ function start() {
 
 	class ParticleSystem {
 
-		constructor(lifetime, ) {
+		constructor(lifetime) {
 
+			this.radius = .1;
+			this.segments = 7;
 			this.lifetime = lifetime;
 			this.particles = [];
 
-			// particle = [startTime, posx, posy, velx, vely]
-			this.particleParams = [];
+			// particle = [startTime, posx, posy, velx, vely, object]
 
 		}
 
-		createParticle(posx, posy, velx, vely) {
-			return [global.millis, posx, posy, velx || 0, vely || 0];
+		createParticle(scene, posx, posy, velx, vely) {
+			var geometry = new THREE.CircleGeometry(this.radius, this.segments);
+			var material = new THREE.MeshBasicMaterial();
+			material.transparent = true;
+			var mesh = new THREE.Mesh(geometry, material);
+			mesh.position.y = Math.random() * 20 - 10;
+			mesh.rotation.x = Math.PI/2;
+			scene.add(mesh);
+			return Array(global.millis, posx, posy, velx || 0, vely || 0, mesh);
+
+			// TODO: IF WE CAN RAW DRAW 2D STUFF THIS CAN GO AND WE CAN JUST DRAW ALL THE PARTICLES IN ONE FUNC
 		}
 
-		addParticles(amt, posx, posy, deviation, velx, vely) {
-			for (i in amt) {
-				this.particles += createParticle(posx + (Math.random() - .5) * deviation, posy + (Math.random() - .5) * deviation, velx, vely);
+		addParticles(scene, amt, posx, posy, deviationx, deviationy, velx, vely) {
+			for (let i = 0; i < amt; i++) {
+				this.particles.push(this.createParticle(scene, posx + (Math.random() - .5) * deviationx, posy + (Math.random() - .5) * deviationy, velx, vely));
 			}
 		}
 
-		applyParticleForces() {}
+		// setSpawnInterval(amt, interval, posx, posy, deviationx, deviationy, velx, vely) {
+		// 	window.setInterval(function() {
+		// 		this.addParticles(amt, posx, posy, deviationx || 0, deviationy || 0, velx || 0, vely || 0);
+		// 	}, interval);
+		// }
+
+		applyParticleForces(dt, particle) {}
 		// specific per particle system, including drag
 
-		updateParticles(dt) {
-			let i = this.particles.length - 1;
-			let millis = global.millis;
-			while (i--) {
-				if (millis - this.particles[i][0] > this.lifetime) {
-					this.particles.splice(i,1);
+		updateParticles(millis, dt, scene) {
+			for (let i = this.particles.length - 1; i >= 0; i--) {
+				let particle = this.particles[i];
+				if (millis - particle[0] > this.lifetime) {
+					scene.remove(this.particles[i][5]);
+					this.particles.splice(i, 0);
 				} else {
-					let particle = this.particles[i];
-					particle[1] += particle[3];
-					particle[2] += particle[4];
-				}
-				applyParticleForces();
-			}
+					this.applyParticleForces(dt, particle);
+					particle[1] += particle[3] * dt;
+					particle[2] += particle[4] * dt;
 
-			// drawParticles();
+					particle[5].position.x = particle[1];
+					particle[5].position.z = particle[2];
+
+					this.adjustParticleLooks(particle, this.lifetime);
+				}
+			}
+			// console.log(this.particles[0]);
+
+			// this.drawParticles();
 		}
 
-		drawParticles() {}
+		adjustParticleLooks(particle, lifetime) {}
+		// specific per particle
 
 	}
 
-	function setUpParticleSystems() {
-		global.particles = {};
-		
+	function setUpParticleSystems(scene) {
 
+		global.canvas = document.getElementById("container").childNodes[0];
+
+		global.embers = new ParticleSystem(6000);
+
+		global.embers.applyParticleForces = function(dt, particle) {
+			particle[3] += dt * .00001 * (Math.sin(particle[1]/3) + Math.cos(particle[2]/2));
+			particle[4] += dt * .00002 * (Math.sin(particle[2]) + Math.cos(particle[1]));
+
+			particle[3] *= .99 ** dt;
+			particle[4] += .00005 * dt;
+			particle[4] *= .99 ** dt;
+		};
+
+		global.embers.adjustParticleLooks = function(particle, lifetime) {
+			let thing = (global.millis - particle[0]) / lifetime;
+			particle[5].material.opacity = 1 - thing;
+			particle[5].material.color = {r: 1, g: 1 - thing * 1.5, b: .1};
+		}
+
+		// global.embers.setSpawnInterval(10, 700, 200, 0, 400, 10);
+		setInterval(function() {
+			global.embers.addParticles(scene, 2, 0, -17, 60, 4, 0, 0);
+		}, 200);
 
 	}
 	
@@ -288,6 +331,7 @@ function start() {
 		target = target > 1 ? 1.0 : (target < 0 ? 0 : target);
 		// Only use volume shifts above 0.5; double result of target - 0.5 (actually do not)
 		// target = Math.max(0, (target - 0.5) * 2);
+		// console.log(target);
 
 		// s = inverse speed, amount that difference is divided
 		let s = 10;
@@ -361,6 +405,9 @@ function start() {
 
 		setUpAudioContext();
 
+		// set up embers
+		setUpParticleSystems(scene);
+
 		// Attach the renderer-supplied
 		// DOM element.
 		container.appendChild(renderer.domElement);
@@ -391,6 +438,9 @@ function start() {
 				getSquintInfluence(global.analyser),
 				getEyeInfluence(global.blinkEyeRightTime).sinusoidal || 0)
 				, gruh);
+
+			// update particle system
+			global.embers.updateParticles(global.millis, global.dt, scene);
 
 			// Schedule the next frame.
 			requestAnimationFrame(update);
