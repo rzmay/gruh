@@ -40,13 +40,18 @@ function sendSound() {
   });
 }
 
-function doBlink() {
-  function blinkEye(eye) {
-    io.emit('blinkEye'+eye);
-  }
+function blinkEye(eye) {
+  io.emit('blinkEye'+eye, {time: new Date().getTime()});
+}
 
-  setTimeout(()=>{blinkEye('Left')}, (Math.random() * 0.2 * 1000));
-  setTimeout(()=>{blinkEye('Right')}, (Math.random() * 0.2 * 1000));
+function doBlink() {
+
+  setTimeout(()=>{
+    blinkEye('Left');
+  }, (Math.random() * 0.2 * 1000));
+  setTimeout(()=>{
+    blinkEye('Right');
+  }, (Math.random() * 0.2 * 1000));
 
   setTimeout(doBlink, ((Math.random() * 3) +  5) * 1000);
 }
