@@ -9,6 +9,9 @@ global.onstart.push(()=>{
 			.then(function(stream) {
 				var source = audioCtx.createMediaStreamSource(stream);
 				source.connect(analyser);
+			})
+			.catch(function(error) {
+				console.log(error);
 			});
 	}
 
