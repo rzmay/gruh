@@ -10,11 +10,11 @@ global.onstart.push(()=>{
 		global.playSound(b64, startTime);
 	});
 
-	socket.on('blinkEyeLeft', ()=>{
-		global.blinkEyeLeftTime = global.millis;
+	socket.on('blinkEyeLeft', (data)=>{
+		global.blinkEyeLeftTime = data.time;
 	});
 
-	socket.on('blinkEyeRight', ()=>{
-		global.blinkEyeRightTime = global.millis;
+	socket.on('blinkEyeRight', (data)=>{
+		global.blinkEyeRightTime = data.time;
 	});
 });

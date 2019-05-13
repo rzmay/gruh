@@ -16,10 +16,10 @@ global.onstart.push(()=>{
 		function blinkEye(eye) {
 			let blink = {
 				'Left': ()=>{
-					global.blinkEyeLeftTime = global.millis
+					global.blinkEyeLeftTime = new Date().getTime();
 				},
 				'Right': ()=>{
-					global.blinkEyeRightTime = global.millis
+					global.blinkEyeRightTime = new Date().getTime();
 				}
 			};
 			blink[eye]();
