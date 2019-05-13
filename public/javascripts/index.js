@@ -181,6 +181,13 @@ function start() {
 		);
 	}
 
+	function getFreqData(analyser) {
+		let typedFreqData = new Uint8Array(analyser.frequencyBinCount);
+		analyser.getByteFrequencyData(typedFreqData);
+
+		return Array.from(typedFreqData);
+	}
+
 	function addLights(transforms, scene) {
 		for (let i = 0; i < transforms.length; i++) {
 			const pointLight =
@@ -197,11 +204,7 @@ function start() {
 	}
 
 	function getVolume(analyser) {
-		let typedFreqData = new Uint8Array(analyser.frequencyBinCount);
-
-		analyser.getByteFrequencyData(typedFreqData);
-
-		let freqData = Array.from(typedFreqData);
+		let freqData = getFreqData(analyser);
 
 		// average volume
 		return freqData.reduce( ( p, c ) => p + c, 0 ) / freqData.length;
@@ -215,7 +218,50 @@ function start() {
 		// return capped;
 
 		// Average of freqData
-		return Math.max(0, Math.min(volume / 100.0, 1));
+		let realAvg = Math.max(0, Math.min(volume / 100.0, 1));
+
+		// Average of freqData in common voice range
+		let freqData = getFreqData(global.analyser);
+		freqData.splice(0, 85);
+		freqData.splice(255);
+		let avg = freqData.reduce( ( p, c ) => p + c, 0 ) / freqData.length;
+		let commonVoice = Math.max(0, Math.min(avg / 255.0, 1));
+
+		// favor commonVoice more depending on how much louder it is
+		const differenceDamper = 10;
+		let commonVoiceWeight = 1 + (commonVoice - realAvg) / differenceDamper;
+		let weightedAvg = ((commonVoice * commonVoiceWeight) + realAvg) / (1 + commonVoiceWeight);
+
+		return weightedAvg
+	}
+
+	function getSquintInfluence(analyser) {
+		let freqData = getFreqData(analyser);
+
+		// Use median of freq data
+		const sum = freqData.reduce((a,b)=>{return a+b});
+		let total = 0;
+		let found = false;
+		let median = null;
+		for (let i = 0; i < freqData.length && !found; i++) {
+			total += freqData[i];
+			if (total >= sum / 2) {
+				median = i;
+				found = true;
+			}
+		}
+
+		let squintInfluence1 = Math.min(Math.max(Math.min(median, 500) - 200, 0) / 500, 1);
+
+		// Use average of three-quarters of freq data
+		freqData.splice(0, Math.floor(1 * freqData.length / 4));
+		let avg = freqData.reduce( ( p, c ) => p + c, 0 ) / freqData.length;
+		let squintInfluence2 = avg / 255;
+
+		// Use whichever is greater for the most effect
+		let squintInfluence = Math.max(squintInfluence1, squintInfluence2);
+
+		return squintInfluence;
 	}
 
 	function getEyeInfluence(time) {
@@ -242,7 +288,6 @@ function start() {
 		target = target > 1 ? 1.0 : (target < 0 ? 0 : target);
 		// Only use volume shifts above 0.5; double result of target - 0.5 (actually do not)
 		// target = Math.max(0, (target - 0.5) * 2);
-		console.log(target);
 
 		// s = inverse speed, amount that difference is divided
 		let s = 10;
@@ -337,8 +382,15 @@ function start() {
 
 			setEyebrowsRaised(getEyebrowInfluence(global.volumeInterp), gruh);
 
-			setLeftEyeClosed(getEyeInfluence(global.blinkEyeLeftTime).sinusoidal, gruh);
-			setRightEyeClosed(getEyeInfluence(global.blinkEyeRightTime).sinusoidal, gruh);
+			setLeftEyeClosed(
+				Math.max(
+					getSquintInfluence(global.analyser),
+					getEyeInfluence(global.blinkEyeLeftTime).sinusoidal || 0)
+				, gruh);
+			setRightEyeClosed(Math.max(
+				getSquintInfluence(global.analyser),
+				getEyeInfluence(global.blinkEyeRightTime).sinusoidal || 0)
+				, gruh);
 
 			// Schedule the next frame.
 			requestAnimationFrame(update);

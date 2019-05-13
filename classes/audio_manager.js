@@ -34,6 +34,7 @@ var AudioManager = class {
 	}
 
 	startPlaying(file, io) {
+		console.log('startPlaying call');
 		this.filepath = file;
 
 		// Send sound from start to any clients already connected
@@ -44,19 +45,24 @@ var AudioManager = class {
 
 		var self = this;
 
-		var checkAudioOver = setInterval(()=>{
-			if (self.getTime() > self.fileLength) {
-				clearInterval(checkAudioOver);
-				self.playStart = null;
-				self.filepath = null;
-				self.fileLength = 0;
-				self.onend();
-			}
-		}, 100);
-
 		getAudioDurationInSeconds(__dirname + file)
 			.then((duration) => {
+				// set file length
 				self.fileLength = duration * 1000;
+
+				// start playing
+				var checkAudioOver = setInterval(()=>{
+					// console.log(self.getTime());
+					if (self.getTime() > self.fileLength) {
+						console.log('startPlaying over');
+						clearInterval(checkAudioOver);
+						self.playStart = null;
+						self.filepath = null;
+						self.fileLength = 0;
+						self.onend();
+					}
+				}, 100);
+
 			})
 			.catch((error) => {
 				console.log(error);

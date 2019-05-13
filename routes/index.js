@@ -24,15 +24,19 @@ io.on('connect', (socket) => {
 
 function sendSound() {
   // Get path to sound file
-  var paths = ['/../audio/sound.mp3', '/../audio/sound2.mp3'];
+  console.log('sendSound call');
+  var paths = ['/../audio/sound.mp3', '/../audio/sound2.mp3', '/../audio/dirty_baby.mp3', '/../audio/jude_laughing.mp3'];
   soundPath = paths[Math.floor(Math.random()*paths.length)];
 
   // Override
-  soundPath = '/../audio/dirty_baby.mp3';
+  // soundPath = '/../audio/mohonga.mp3';
 
   audioManager.startPlaying(soundPath, io);
   audioManager.on('end', ()=>{
-    setTimeout(()=>{sendSound()}, 7000);
+    setTimeout(()=>{
+      console.log('sendSound over');
+      sendSound()
+    }, 7000);
   });
 }
 
