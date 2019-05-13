@@ -102,7 +102,7 @@ function start() {
 		global.embers.adjustParticleLooks = function(particle, lifetime) {
 			let thing = (global.millis - particle[0]) / lifetime;
 			particle[5].material.opacity = 1 - thing;
-			particle[5].material.color = {r: 1, g: 1 - thing * 1.5, b: .1};
+			particle[5].material.color = {r: 1, g: 1 - thing * 1.5, b: 1 - thing * 3};
 		}
 
 		// global.embers.setSpawnInterval(10, 700, 200, 0, 400, 10);
