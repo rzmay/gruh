@@ -51,18 +51,13 @@ var AudioManager = class {
 				self.fileLength = duration * 1000;
 
 				// start playing
-				var checkAudioOver = setInterval(()=>{
-					// console.log(self.getTime());
-					if (self.getTime() > self.fileLength) {
-						console.log('startPlaying over');
-						clearInterval(checkAudioOver);
-						self.playStart = null;
-						self.filepath = null;
-						self.fileLength = 0;
-						self.onend();
-					}
-				}, 100);
-
+				setTimeout(()=>{
+					console.log('startPlaying over');
+					self.playStart = null;
+					self.filepath = null;
+					self.fileLength = 0;
+					self.onend();
+				}, self.fileLength);
 			})
 			.catch((error) => {
 				console.log(error);
