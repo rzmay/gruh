@@ -6,7 +6,7 @@ const { getAudioDurationInSeconds } = require('get-audio-duration');
 
 var AudioManager = class {
 
-	connstructor() {
+	constructor() {
 		this.playStart = null;
 		this.filepath = null;
 		this.fileLength = 0;
