@@ -278,6 +278,17 @@ global.onstart.push(function () {
 		return next;
 	}
 
+	function getHeadRotation(mDown, dmx, dmy, prevx, prevy, dt) {
+		if (mDown) {
+			var x = prevx + dt * dmx / ((Math.abs(prevx) + 1) ** 2);
+			var y = prevy + dt * dmy / ((Math.abs(prevy) + 1) ** 2);
+			console.log(x);
+			return [x, y];
+		}
+		console.log(prevx/(.9**dt));
+		return [prevx*(.9**dt), prevy*(.9**dt)];
+	}
+
 	function setMouthOpen(amount, gruh) {
 		if (!gruh) return;
 		gruh.traverse( function ( node ) {
@@ -329,6 +340,10 @@ global.onstart.push(function () {
 		global.dt = 16;
 		global.millis = new Date().getTime();
 
+		global.mouseDown = false;
+		global.headx = 0;
+		global.heady = 0;
+
 		addMesh(scene, (mesh) => {
 			gruh = mesh;
 		});
@@ -347,6 +362,9 @@ global.onstart.push(function () {
 		// DOM element.
 		container.appendChild(renderer.domElement);
 
+		window.addEventListener('mousedown', function() {global.mouseDown = true});
+		window.addEventListener('mouseup', function() {global.mouseDown = false});
+
 		function update() {
 			// Draw!
 			let ct = new Date().getTime();
@@ -363,6 +381,10 @@ global.onstart.push(function () {
 			setMouthOpen(getMouthInfluence(global.volumeInterp), gruh);
 
 			setEyebrowsRaised(getEyebrowInfluence(global.volumeInterp), gruh);
+
+			let bruh = getHeadRotation(global.mouseDown, 1, 0, global.headx, global.heady, global.dt)
+			global.headx = bruh[0];
+			global.heady = bruh[1];
 
 			setLeftEyeClosed(
 				Math.max(
