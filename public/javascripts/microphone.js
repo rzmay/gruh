@@ -5,7 +5,9 @@ global.onstart.push(()=>{
 		let audioCtx = global.audioContext;
 		let analyser = global.analyser;
 
-		navigator.mediaDevices.getUserMedia({audio: true})
+		let media = (navigator.mediaDevices || navigator);
+		console.log(media);
+		media.getUserMedia({audio: true})
 			.then(function(stream) {
 				var source = audioCtx.createMediaStreamSource(stream);
 				source.connect(analyser);

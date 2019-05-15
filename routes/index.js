@@ -33,7 +33,7 @@ function sendSound() {
   soundPath = paths[Math.floor(Math.random()*paths.length)];
 
   // Override
-  // soundPath = '/../audio/mohonga.mp3';
+  soundPath = '/../audio/jude_laughing.mp3';
 
   audioManager.startPlaying(soundPath, io);
   audioManager.on('end', ()=>{
