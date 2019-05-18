@@ -23,28 +23,86 @@ global.onstart.push(function () {
 
 		global.canvas = document.getElementById("container").childNodes[0];
 
-		global.embers = new ParticleSystem(6000);
+		// Embers
+		global.embers = new ParticleSystem(6000, ()=>{
+			var radius = 0.1;
+			var segments = 7;
+			var geometry = new THREE.CircleGeometry(radius, segments);
+			var material = new THREE.MeshBasicMaterial();
+			material.transparent = true;
+			return new THREE.Mesh(geometry, material);
+		});
+
+		global.embers.getNewParticle= function(createParticle) {
+			let [posx, posy, posz, deviationx, deviationy, deviationz, velx, vely, velz, rotx, roty, rotz] =
+				[0, -17, Math.random() * 20 - 10, 60, 4, 0, 0, 0, 0, 0, 0, 0];
+
+			let params = {
+				posx: posx + (Math.random() - .5) * deviationx,
+				posy: posy + (Math.random() - .5) * deviationy,
+				posz: posz + (Math.random() - .5) * deviationz,
+				velx: velx,
+				vely: vely,
+				velz: velz,
+				rotx: rotx,
+				roty: roty,
+				rotz: rotz
+			};
+
+			createParticle(params);
+		};
 
 		global.embers.applyParticleForces = function(dt, particle) {
-			particle[3] += dt * .00001 * (Math.sin(particle[1]/3) + Math.cos(particle[2]/2));
-			particle[4] += dt * .00002 * (Math.sin(particle[2]) + Math.cos(particle[1]));
+			particle[4] += dt * .00001 * (Math.sin(particle[1]/4) + Math.cos(particle[2]/2));
+			particle[5] += dt * .00002 * (Math.sin(particle[2]) + Math.cos(particle[1]));
 
-			particle[3] *= .99 ** dt;
-			particle[4] += .00005 * dt;
 			particle[4] *= .99 ** dt;
+			particle[5] += .00005 * dt;
+			particle[5] *= .99 ** dt;
 		};
 
 		global.embers.adjustParticleLooks = function(particle, lifetime) {
-			let thing = (global.millis - particle[0]) / lifetime;
-			particle[5].material.opacity = 1 - thing;
-			particle[5].material.color = {r: 1, g: 1 - thing * 1.5, b: 1 - thing * 3};
-		}
+			let life = (global.millis - particle[0]) / lifetime;
+			particle[10].material.opacity = 1 - life;
+			particle[10].material.color = {r: 1, g: 1 - life * 1.5, b: 1 - life * 3};
+		};
+
+
 
 		// global.embers.setSpawnInterval(10, 700, 200, 0, 400, 10);
 		setInterval(function() {
-			global.embers.addParticles(scene, 2, 0, -17, 60, 4, 0, 0);
+			console.log('particles');
+			global.embers.addParticles(scene, 2);
 		}, 200);
 
+		// // Smoke
+		// smokeTexture = THREE.ImageUtils.loadTexture('images/particle_smoke.png');
+		// smokeMaterial = new THREE.MeshLambertMaterial({color: 0x666666, map: smokeTexture, transparent: true});
+		// smokeGeo = new THREE.PlaneGeometry(300,300);
+		//
+		// global.smoke = new ParticleSystem(6000, material, mesh);
+		//
+		// global.smoke.applyParticleForces = function(dt, particle) {
+		// 	particle[3] += dt * .00001 * (Math.sin(particle[1]/3) + Math.cos(particle[2]/2));
+		// 	particle[4] += dt * .00002 * (Math.sin(particle[2]) + Math.cos(particle[1]));
+		//
+		// 	particle[3] *= .99 ** dt;
+		// 	particle[4] += .00005 * dt;
+		// 	particle[4] *= .99 ** dt;
+		// };
+		//
+		// global.embers.adjustParticleLooks = function(particle, lifetime) {
+		// 	let thing = (global.millis - particle[0]) / lifetime;
+		// 	particle[5].material.opacity = 1 - thing;
+		// 	particle[5].material.color = {r: 1, g: 1 - thing * 1.5, b: 1 - thing * 3};
+		// };
+		//
+		//
+		//
+		// // global.smoke.setSpawnInterval(10, 700, 200, 0, 400, 10);
+		// setInterval(function() {
+		// 	global.embers.addParticles(scene, 2, 0, -17, 60, 4, 0, 0);
+		// }, 200);
 	}
 
 	global.playSound = function (b64, startTime) {
