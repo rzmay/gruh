@@ -415,10 +415,10 @@ global.onstart.push(function () {
 		if (mDown) {
 			var x = prevx + dt * dmx / ((Math.abs(prevx) + 1) ** 2);
 			var y = prevy + dt * dmy / ((Math.abs(prevy) + 1) ** 2);
-			console.log(x);
+			// console.log(x);
 			return [x, y];
 		}
-		console.log(prevx/(.9**dt));
+		// console.log(prevx/(.9**dt));
 		return [prevx*(.9**dt), prevy*(.9**dt)];
 	}
 
