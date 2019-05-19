@@ -1,10 +1,13 @@
 class ParticleSystem {
 
-    constructor(lifetime, getMesh) {
-        this.lifetime = lifetime;
+    constructor(type, getMesh, killCondition) {
         this.particles = [];
 
+        this.isSprite = type == 'sprite' ? true : false;
+        this.isMesh = !this.isSprite;
+
         this.getMesh = getMesh;
+        this.killCondition = killCondition;
 
         // particle = [startTime, posx, posy, posz, velx, vely, velz, rotx, roty, rotz, object]
 
@@ -13,14 +16,27 @@ class ParticleSystem {
     createParticle(scene, posx, posy, posz, velx, vely, velz, rotx, roty, rotz) {
         var mesh = this.getMesh();
 
-        // position y = vel z; y is up
+        // switch y and z; y is up
+        mesh.position.x = posx;
         mesh.position.y = posz;
-        mesh.rotation.x = Math.PI/2;
+        mesh.position.z = posy;
+
+        if (this.isSprite) {
+            let material = mesh.material;
+            material.rotation = rotx;
+        } else {
+            mesh.rotation.x = rotx;
+            mesh.rotation.y = rotz;
+            mesh.rotation.z = roty;
+        }
+
         scene.add(mesh);
         return Array(global.millis, posx, posy, mesh.position.y, velx || 0, vely || 0, velz ||0, rotx || 0, roty || 0, rotz || 0, mesh);
 
         // TODO: IF WE CAN RAW DRAW 2D STUFF THIS CAN GO AND WE CAN JUST DRAW ALL THE PARTICLES IN ONE FUNC
     }
+
+    getNewParticle(createParticle) { }
 
     addParticles(scene, amt) {
         for (let i = 0; i < amt; i++) {
@@ -54,18 +70,29 @@ class ParticleSystem {
     updateParticles(millis, dt, scene) {
         for (let i = this.particles.length - 1; i >= 0; i--) {
             let particle = this.particles[i];
-            if (millis - particle[0] > this.lifetime) {
-                scene.remove(this.particles[i][6]);
+            if (this.killCondition(particle, self)) {
+                scene.remove(this.particles[i][10]);
                 this.particles.splice(i, 0);
             } else {
                 this.applyParticleForces(dt, particle);
+                this.adjustParticleLooks(particle);
                 particle[1] += particle[4] * dt;
                 particle[2] += particle[5] * dt;
+                particle[3] += particle[6] * dt;
 
+                // Swap z and y axes; y-up
                 particle[10].position.x = particle[1];
                 particle[10].position.z = particle[2];
+                particle[10].position.y = particle[3];
 
-                this.adjustParticleLooks(particle, this.lifetime);
+                if (this.isSprite) {
+                    let material = particle[10].material;
+                    material.rotation = particle[7];
+                } else {
+                    particle[10].rotation.x = particle[7];
+                    particle[10].rotation.z = particle[8];
+                    particle[10].rotation.y = particle[9];
+                }
             }
         }
         // console.log(this.particles[0]);

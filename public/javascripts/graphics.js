@@ -19,23 +19,46 @@ global.onstart.push(function () {
 		global.volumeInterp = 0;
 	}
 
+	// Utility func
+	function randomSeed(seed) {
+		var x = Math.sin(seed) * 10000;
+		return x - Math.floor(x);
+	}
+
 	function setUpParticleSystems(scene) {
 
 		global.canvas = document.getElementById("container").childNodes[0];
 
+		// Set up which particles to show
+		global.showEmbers = false;
+		global.showSmoke = true;
+
 		// Embers
-		global.embers = new ParticleSystem(6000, ()=>{
-			var radius = 0.1;
-			var segments = 7;
-			var geometry = new THREE.CircleGeometry(radius, segments);
-			var material = new THREE.MeshBasicMaterial();
-			material.transparent = true;
-			return new THREE.Mesh(geometry, material);
-		});
+
+		// Custom property for particle system
+		let embersLifetime = 6000;
+
+		global.embers = new ParticleSystem(
+			'mesh',
+			()=>{
+				var radius = 0.1;
+				var segments = 7;
+				var geometry = new THREE.CircleGeometry(radius, segments);
+				var material = new THREE.MeshBasicMaterial();
+				material.transparent = true;
+				return new THREE.Mesh(geometry, material);
+			},
+			(particle, self)=>{
+				return global.millis - particle[0] > embersLifetime;
+			}
+		);
+
+		// Custom property for embers
+		global.embers.lifetime = 6000;
 
 		global.embers.getNewParticle= function(createParticle) {
 			let [posx, posy, posz, deviationx, deviationy, deviationz, velx, vely, velz, rotx, roty, rotz] =
-				[0, -17, Math.random() * 20 - 10, 60, 4, 0, 0, 0, 0, 0, 0, 0];
+				[0, -17, 0, 60, 4, 40, 0, 0, 0, Math.PI / 2, 0, 0];
 
 			let params = {
 				posx: posx + (Math.random() - .5) * deviationx,
@@ -61,8 +84,8 @@ global.onstart.push(function () {
 			particle[5] *= .99 ** dt;
 		};
 
-		global.embers.adjustParticleLooks = function(particle, lifetime) {
-			let life = (global.millis - particle[0]) / lifetime;
+		global.embers.adjustParticleLooks = function(particle) {
+			let life = (global.millis - particle[0]) / global.embers.lifetime;
 			particle[10].material.opacity = 1 - life;
 			particle[10].material.color = {r: 1, g: 1 - life * 1.5, b: 1 - life * 3};
 		};
@@ -70,39 +93,91 @@ global.onstart.push(function () {
 
 
 		// global.embers.setSpawnInterval(10, 700, 200, 0, 400, 10);
-		setInterval(function() {
-			console.log('particles');
-			global.embers.addParticles(scene, 2);
-		}, 200);
+		if (global.showEmbers) {
+			setInterval(function() {
+				global.embers.addParticles(scene, 2);
+			}, 200);
+		}
 
-		// // Smoke
-		// smokeTexture = THREE.ImageUtils.loadTexture('images/particle_smoke.png');
-		// smokeMaterial = new THREE.MeshLambertMaterial({color: 0x666666, map: smokeTexture, transparent: true});
-		// smokeGeo = new THREE.PlaneGeometry(300,300);
-		//
-		// global.smoke = new ParticleSystem(6000, material, mesh);
-		//
-		// global.smoke.applyParticleForces = function(dt, particle) {
-		// 	particle[3] += dt * .00001 * (Math.sin(particle[1]/3) + Math.cos(particle[2]/2));
-		// 	particle[4] += dt * .00002 * (Math.sin(particle[2]) + Math.cos(particle[1]));
-		//
-		// 	particle[3] *= .99 ** dt;
-		// 	particle[4] += .00005 * dt;
-		// 	particle[4] *= .99 ** dt;
-		// };
-		//
-		// global.embers.adjustParticleLooks = function(particle, lifetime) {
-		// 	let thing = (global.millis - particle[0]) / lifetime;
-		// 	particle[5].material.opacity = 1 - thing;
-		// 	particle[5].material.color = {r: 1, g: 1 - thing * 1.5, b: 1 - thing * 3};
-		// };
-		//
-		//
-		//
-		// // global.smoke.setSpawnInterval(10, 700, 200, 0, 400, 10);
-		// setInterval(function() {
-		// 	global.embers.addParticles(scene, 2, 0, -17, 60, 4, 0, 0);
-		// }, 200);
+		// Smoke
+		let smokeTexture = new THREE.TextureLoader().load('images/particle_smoke_1.png');
+
+		global.smoke = new ParticleSystem(
+			'sprite',
+			()=>{
+				// let smokeTexture = new THREE.TextureLoader().load('images/particle_smoke_1.png');
+				// let smokeMaterial = new THREE.MeshLambertMaterial({color: 0x888888, map: smokeTexture, transparent: true, opactiy: 0.1});
+				// let smokeGeo = new THREE.PlaneGeometry(20,20);
+				//
+				// return new THREE.Mesh(smokeGeo, smokeMaterial);
+				let smokeMaterial = new THREE.SpriteMaterial({color: 0xc8c8c8, map: smokeTexture, transparent: true});
+				smokeMaterial.opacity = 0.2;
+
+				let sprite = new THREE.Sprite(smokeMaterial);
+				sprite.scale.set(30, 30, 1);
+
+				return sprite;
+			},
+			(particle, self)=>{
+				return (particle[1] > 75);
+			}
+		);
+
+		global.smoke.getNewParticle= function(createParticle) {
+			let [posx, posy, posz, deviationx, deviationy, deviationz, velx, vely, velz, rotx, roty, rotz] =
+				[-75, -20, 0, 20, 30, 30, 0.005, 0, 0, Math.random() * (2 * Math.PI), 0, 0];
+
+			let params = {
+				posx: posx + (Math.random() - .5) * deviationx,
+				posy: posy + (Math.random() - .5) * deviationy,
+				posz: posz + (Math.random() - .5) * deviationz,
+				velx: velx,
+				vely: vely,
+				velz: velz,
+				rotx: rotx,
+				roty: roty,
+				rotz: rotz
+			};
+
+			createParticle(params);
+		};
+
+		global.smoke.adjustParticleLooks = function(particle) {
+			particle[7] += (2*Math.PI / 360) * 0.25;
+
+			// Sin wave with a period of 3000 and a random offset seeded by start time
+			let life = global.millis - particle[0];
+			let darkness = (1 / 255) * (200 + 30 * Math.sin((2*Math.PI / 3000) * (life + randomSeed(particle[0]))));
+
+			// console.log('d: '+ darkness);
+			particle[10].material.color = {r: darkness, g: darkness, b: darkness};
+		};
+
+		// Add smoke to center before created smoke drifts in
+		for (let i = -75; i < 75; i+=3) {
+			let [posx, posy, posz, deviationx, deviationy, deviationz, velx, vely, velz, rotx, roty, rotz] =
+				[i, -20, 0, 20, 30, 30, 0.005, 0, 0, Math.random() * (2 * Math.PI), 0, 0];
+
+			global.smoke.particles.push(global.smoke.createParticle(
+				scene,
+				posx + (Math.random() - .5) * deviationx,
+				posy + (Math.random() - .5) * deviationy,
+				posz + (Math.random() - .5) * deviationz,
+				velx,
+				vely,
+				velz,
+				rotx,
+				roty,
+				rotz,
+			));
+		}
+
+		// global.smoke.setSpawnInterval(10, 700, 200, 0, 400, 10);
+		if (global.showSmoke) {
+			setInterval(function () {
+				global.smoke.addParticles(scene, 1);
+			}, 400);
+		}
 	}
 
 	global.playSound = function (b64, startTime) {
@@ -130,7 +205,7 @@ global.onstart.push(function () {
 		var source = audioCtx.createMediaElementSource(audio);
 
 		source.connect(analyser);
-	}
+	};
 
 	function addCamera(scene) {
 		// Set some camera attributes.
@@ -433,7 +508,8 @@ global.onstart.push(function () {
 				, gruh);
 
 			// update particle system
-			global.embers.updateParticles(global.millis, global.dt, scene);
+			if (global.showEmbers) global.embers.updateParticles(global.millis, global.dt, scene);
+			if (global.showSmoke) global.smoke.updateParticles(global.millis, global.dt, scene);
 
 			// Schedule the next frame.
 			requestAnimationFrame(update);
