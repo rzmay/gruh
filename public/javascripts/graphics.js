@@ -38,15 +38,21 @@ global.onstart.push(function () {
 		// Custom property for particle system
 		let embersLifetime = 6000;
 
+		let embersTexture = new THREE.TextureLoader().load('images/particle_embers_1.png');
+
 		global.embers = new ParticleSystem(
 			'mesh',
 			()=>{
 				var radius = 0.1;
 				var segments = 7;
 				var geometry = new THREE.CircleGeometry(radius, segments);
-				var material = new THREE.MeshBasicMaterial();
+				var material = new THREE.MeshBasicMaterial({color: 0xffffff, map: embersTexture, transparent: true});
 				material.transparent = true;
-				return new THREE.Mesh(geometry, material);
+
+				let sprite = new THREE.Sprite(material);
+				sprite.scale.set(.15,.15,1);
+
+				return sprite;
 			},
 			(particle, self)=>{
 				return global.millis - particle[0] > embersLifetime;
