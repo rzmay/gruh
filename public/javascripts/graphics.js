@@ -30,7 +30,7 @@ global.onstart.push(function () {
 		global.canvas = document.getElementById("container").childNodes[0];
 
 		// Set up which particles to show
-		global.showEmbers = false;
+		global.showEmbers = true;
 		global.showSmoke = true;
 
 		// Embers
@@ -147,7 +147,7 @@ global.onstart.push(function () {
 
 			// Sin wave with a period of 3000 and a random offset seeded by start time
 			let life = global.millis - particle[0];
-			let darkness = (1 / 255) * (200 + 30 * Math.sin((2*Math.PI / 3000) * (life + randomSeed(particle[0]))));
+			let darkness = (1 / 255) * (180 + 50 * Math.sin((2*Math.PI / 3000) * (life + (randomSeed(particle[0]) * 3000))));
 
 			// console.log('d: '+ darkness);
 			particle[10].material.color = {r: darkness, g: darkness, b: darkness};
