@@ -30,7 +30,7 @@ global.onstart.push(function () {
 		global.canvas = document.getElementById("container").childNodes[0];
 
 		// Set up which particles to show
-		global.showEmbers = false;
+		global.showEmbers = true;
 		global.showSmoke = true;
 
 		// Embers
@@ -46,11 +46,11 @@ global.onstart.push(function () {
 				var radius = 0.1;
 				var segments = 7;
 				var geometry = new THREE.CircleGeometry(radius, segments);
-				var material = new THREE.MeshBasicMaterial({color: 0xffffff, map: embersTexture, transparent: true});
+				var material = new THREE.SpriteMaterial({color: 0xffffff, map: embersTexture, transparent: true});
 				material.transparent = true;
 
 				let sprite = new THREE.Sprite(material);
-				sprite.scale.set(.15,.15,1);
+				sprite.scale.set(.18,.18,1);
 
 				return sprite;
 			},
