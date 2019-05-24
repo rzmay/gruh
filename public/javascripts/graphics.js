@@ -38,15 +38,12 @@ global.onstart.push(function () {
 		// Custom property for particle system
 		let embersLifetime = 6000;
 
-		let embersTexture = new THREE.TextureLoader().load('images/particle_embers_1.png');
+		let embersTexture = new THREE.TextureLoader().load('images/particle_embers.png');
 
 		global.embers = new ParticleSystem(
 			'mesh',
 			()=>{
-				var radius = 0.1;
-				var segments = 7;
-				var geometry = new THREE.CircleGeometry(radius, segments);
-				var material = new THREE.MeshBasicMaterial({color: 0xffffff, map: embersTexture, transparent: true});
+				var material = new THREE.SpriteMaterial({color: 0xffffff, map: embersTexture, transparent: true});
 				material.transparent = true;
 
 				let sprite = new THREE.Sprite(material);
@@ -107,17 +104,15 @@ global.onstart.push(function () {
 
 		// Smoke
 		let smokeTexture = new THREE.TextureLoader().load('images/particle_smoke_1.png');
+		let smokeSpawnX = 75;
 
 		global.smoke = new ParticleSystem(
 			'sprite',
 			()=>{
-				// let smokeTexture = new THREE.TextureLoader().load('images/particle_smoke_1.png');
-				// let smokeMaterial = new THREE.MeshLambertMaterial({color: 0x888888, map: smokeTexture, transparent: true, opactiy: 0.1});
-				// let smokeGeo = new THREE.PlaneGeometry(20,20);
-				//
-				// return new THREE.Mesh(smokeGeo, smokeMaterial);
 				let smokeMaterial = new THREE.SpriteMaterial({color: 0xc8c8c8, map: smokeTexture, transparent: true});
-				smokeMaterial.opacity = 0.2;
+
+				// Start at 0; smoke will fade in
+				smokeMaterial.opacity = 0.0;
 
 				let sprite = new THREE.Sprite(smokeMaterial);
 				sprite.scale.set(30, 30, 1);
@@ -125,16 +120,16 @@ global.onstart.push(function () {
 				return sprite;
 			},
 			(particle, self)=>{
-				return (particle[1] > 75);
+				return (particle[1] > smokeSpawnX);
 			}
 		);
 
 		global.smoke.getNewParticle= function(createParticle) {
 			let [posx, posy, posz, deviationx, deviationy, deviationz, velx, vely, velz, rotx, roty, rotz] =
-				[-75, -20, 0, 20, 30, 30, 0.005, 0, 0, Math.random() * (2 * Math.PI), 0, 0];
+				[smokeSpawnX, -20, 0, 20, 30, 30, -0.0025, 0, 0, Math.random() * (2 * Math.PI), 0, 0];
 
 			let params = {
-				posx: posx + (Math.random() - .5) * deviationx,
+				posx: (posx - deviationx) + (Math.random() - .5) * deviationx,
 				posy: posy + (Math.random() - .5) * deviationy,
 				posz: posz + (Math.random() - .5) * deviationz,
 				velx: velx,
@@ -149,7 +144,7 @@ global.onstart.push(function () {
 		};
 
 		global.smoke.adjustParticleLooks = function(particle) {
-			particle[7] += (2*Math.PI / 360) * 0.25;
+			particle[7] += (2*Math.PI / 360) * 0.15;
 
 			// Sin wave with a period of 3000 and a random offset seeded by start time
 			let life = global.millis - particle[0];
@@ -157,14 +152,15 @@ global.onstart.push(function () {
 
 			// console.log('d: '+ darkness);
 			particle[10].material.color = {r: darkness, g: darkness, b: darkness};
+			particle[10].material.opacity = Math.max(0, Math.min(0.2, -Math.abs(particle[1] * 0.1) + (smokeSpawnX * 0.1)));
 		};
 
 		// Add smoke to center before created smoke drifts in
-		for (let i = -75; i < 75; i+=3) {
+		for (let i = -smokeSpawnX; i < smokeSpawnX; i+=3) {
 			let [posx, posy, posz, deviationx, deviationy, deviationz, velx, vely, velz, rotx, roty, rotz] =
-				[i, -20, 0, 20, 30, 30, 0.005, 0, 0, Math.random() * (2 * Math.PI), 0, 0];
+				[-i, -20, 0, 20, 30, 30, -0.0025, 0, 0, Math.random() * (2 * Math.PI), 0, 0];
 
-			global.smoke.particles.push(global.smoke.createParticle(
+			let p = global.smoke.createParticle(
 				scene,
 				posx + (Math.random() - .5) * deviationx,
 				posy + (Math.random() - .5) * deviationy,
@@ -175,7 +171,12 @@ global.onstart.push(function () {
 				rotx,
 				roty,
 				rotz,
-			));
+			);
+
+			// Random creation time to fix darkness synchronization
+			p[0] = Math.floor(Math.random() * 1000);
+
+			global.smoke.particles.push(p);
 		}
 
 		// global.smoke.setSpawnInterval(10, 700, 200, 0, 400, 10);
@@ -231,7 +232,7 @@ global.onstart.push(function () {
 		scene.add(camera);
 
 		var controls = new THREE.OrbitControls(camera);
-		camera.position.set(0, -1750, 100);
+		camera.position.set(0, 100, -1750);
 		controls.update();
 
 		controls.maxZoom = 20;
@@ -262,13 +263,13 @@ global.onstart.push(function () {
 
 		loader.load(
 			// resource URL
-			'gruh.glb',
+			'gruh_zUp.glb',
 			// called when the resource is loaded
 			function (gltf) {
 
 				gltf.scene.position.set(0, 0, 0);
 				gltf.scene.scale.set(10, 10, 10);
-				gltf.scene.rotation.set(Math.PI/2, 0, 0);
+				gltf.scene.rotation.set(Math.PI/2, Math.PI, 0);
 
 				scene.add(gltf.scene);
 
@@ -488,9 +489,9 @@ global.onstart.push(function () {
 		});
 
 		addLights([
-			{x: 10, y: -300, z: 50},
+			{x: 10, y: 50, z: -300},
 			{x: -100, y: 200, z: 200},
-			{x: 10, y: 10, z: 10000}], scene);
+			{x: 10, y: 10000, z: 10}], scene);
 
 		setUpAudioContext();
 

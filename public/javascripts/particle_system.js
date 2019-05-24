@@ -16,22 +16,21 @@ class ParticleSystem {
     createParticle(scene, posx, posy, posz, velx, vely, velz, rotx, roty, rotz) {
         var mesh = this.getMesh();
 
-        // switch y and z; y is up
         mesh.position.x = posx;
-        mesh.position.y = posz;
-        mesh.position.z = posy;
+        mesh.position.y = posy;
+        mesh.position.z = posz;
 
         if (this.isSprite) {
             let material = mesh.material;
             material.rotation = rotx;
         } else {
             mesh.rotation.x = rotx;
-            mesh.rotation.y = rotz;
-            mesh.rotation.z = roty;
+            mesh.rotation.y = roty;
+            mesh.rotation.z = rotz;
         }
 
         scene.add(mesh);
-        return Array(global.millis, posx, posy, mesh.position.y, velx || 0, vely || 0, velz ||0, rotx || 0, roty || 0, rotz || 0, mesh);
+        return Array(global.millis, posx, posy, posz, velx || 0, vely || 0, velz ||0, rotx || 0, roty || 0, rotz || 0, mesh);
 
         // TODO: IF WE CAN RAW DRAW 2D STUFF THIS CAN GO AND WE CAN JUST DRAW ALL THE PARTICLES IN ONE FUNC
     }
@@ -80,18 +79,17 @@ class ParticleSystem {
                 particle[2] += particle[5] * dt;
                 particle[3] += particle[6] * dt;
 
-                // Swap z and y axes; y-up
                 particle[10].position.x = particle[1];
-                particle[10].position.z = particle[2];
-                particle[10].position.y = particle[3];
+                particle[10].position.y = particle[2];
+                particle[10].position.z = particle[3];
 
                 if (this.isSprite) {
                     let material = particle[10].material;
                     material.rotation = particle[7];
                 } else {
                     particle[10].rotation.x = particle[7];
-                    particle[10].rotation.z = particle[8];
-                    particle[10].rotation.y = particle[9];
+                    particle[10].rotation.y = particle[8];
+                    particle[10].rotation.z = particle[9];
                 }
             }
         }
