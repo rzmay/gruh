@@ -47,7 +47,7 @@ global.onstart.push(function () {
 				material.transparent = true;
 
 				let sprite = new THREE.Sprite(material);
-				sprite.scale.set(.15,.15,1);
+				sprite.scale.set(.18,.18,1);
 
 				return sprite;
 			},
@@ -522,7 +522,7 @@ global.onstart.push(function () {
 
 			setEyebrowsRaised(getEyebrowInfluence(global.volumeInterp), gruh);
 
-			let bruh = getHeadRotation(global.mouseDown, 1, 0, global.headx, global.heady, global.dt)
+			let bruh = getHeadRotation(global.mouseDown, 1, 0, global.headx, global.heady, global.dt);
 			global.headx = bruh[0];
 			global.heady = bruh[1];
 
