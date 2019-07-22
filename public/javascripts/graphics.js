@@ -42,25 +42,21 @@ global.onstart.push(function () {
 
 		global.embers = new ParticleSystem(
 			'sprite',
-			()=>{
+			() => {
 				var material = new THREE.SpriteMaterial({color: 0xffffff, map: embersTexture, transparent: true});
 				material.transparent = true;
 
 				let sprite = new THREE.Sprite(material);
-				sprite.scale.set(.18,.18,1);
+				sprite.scale.set(.18, .18, 1);
 
 				return sprite;
 			},
-			(particle, self)=>{
-				return global.millis - particle[0] > embersLifetime;
-			},
-			false
+			(particle, self) => {
+				return global.millis - particle.startTime > embersLifetime;
+			}
 		);
 
-		// Custom property for embers
-		global.embers.lifetime = 6000;
-
-		global.embers.getNewParticle= function(createParticle) {
+		global.embers.getNewParticle = function (createParticle) {
 			let [posx, posy, posz, deviationx, deviationy, deviationz, velx, vely, velz, rotx, roty, rotz] =
 				[0, -17, 0, 60, 4, 40, 0, 0, 0, Math.PI / 2, 0, 0];
 
@@ -79,32 +75,33 @@ global.onstart.push(function () {
 			createParticle(params);
 		};
 
-		global.embers.applyParticleForces = function(dt, particle) {
-			particle[4] += dt * .00001 * (Math.sin(particle[1]/4) + Math.cos(particle[2]/2));
-			particle[5] += dt * .00002 * (Math.sin(particle[2]) + Math.cos(particle[1]));
+		global.embers.applyParticleForces = function (dt, particle) {
+			particle.velocity.x += dt * .00001 * (Math.sin(particle.position.x / 4) + Math.cos(particle.position.y / 2));
+			particle.velocity.y += dt * .00002 * (Math.sin(particle.position.y) + Math.cos(particle.position.x));
 
-			particle[4] *= .99 ** dt;
-			particle[5] += .00005 * dt;
-			particle[5] *= .99 ** dt;
+			particle.velocity.x *= .99 ** dt;
+			particle.velocity.y += .00005 * dt;
+			particle.velocity.y *= .99 ** dt;
 		};
 
-		global.embers.adjustParticleLooks = function(particle) {
-			let life = (global.millis - particle[0]) / global.embers.lifetime;
-			particle[10].material.opacity = 1 - life;
-			particle[10].material.color = {r: 1, g: 1 - life * 1.5, b: 1 - life * 3};
+		global.embers.adjustParticleLooks = function (particle) {
+			let life = (global.millis - particle.startTime) / embersLifetime;
+			particle.mesh.material.opacity = 1 - life;
+			particle.mesh.material.color = {r: 1, g: 1 - life * 1.5, b: 1 - life * 3};
 		};
 
 		if (global.showEmbers) {
-			global.emberInterval = global.embers.setSpawnInterval(scene, 2, 200);
+			global.embersInterval = global.embers.setSpawnInterval(scene, 2, 200);
 		}
 
 		// Smoke
 		let smokeTexture = new THREE.TextureLoader().load('images/particle_smoke_1.png');
 		let smokeSpawnX = 75;
+		let smokeKillX = -smokeSpawnX;
 
 		global.smoke = new ParticleSystem(
 			'sprite',
-			()=>{
+			() => {
 				let smokeMaterial = new THREE.SpriteMaterial({color: 0xc8c8c8, map: smokeTexture, transparent: true});
 
 				// Start at 0; smoke will fade in
@@ -115,18 +112,17 @@ global.onstart.push(function () {
 
 				return sprite;
 			},
-			(particle, self)=>{
-				return (particle[1] > smokeSpawnX);
-			},
-			false
+			(particle, self) => {
+				return (particle.position.x < particle.options.killX);
+			}
 		);
 
-		global.smoke.getNewParticle= function(createParticle) {
+		global.smoke.getNewParticle = function (createParticle) {
 			let [posx, posy, posz, deviationx, deviationy, deviationz, velx, vely, velz, rotx, roty, rotz] =
 				[smokeSpawnX, -20, 0, 20, 30, 30, -0.0025, 0, 0, Math.random() * (2 * Math.PI), 0, 0];
 
 			let params = {
-				posx: (posx - deviationx) + (Math.random() - .5) * deviationx,
+				posx: posx + (Math.random() - .5) * deviationx,
 				posy: posy + (Math.random() - .5) * deviationy,
 				posz: posz + (Math.random() - .5) * deviationz,
 				velx: velx,
@@ -137,41 +133,75 @@ global.onstart.push(function () {
 				rotz: rotz
 			};
 
+			params.options = {
+				spawnX: params.posx,
+				killX: params.posx + (smokeKillX - smokeSpawnX)
+			};
+
+			// console.log(params.options);
+
 			createParticle(params);
 		};
 
-		global.smoke.adjustParticleLooks = function(particle) {
-			particle[7] += (2*Math.PI / 360) * 0.15;
+		global.smoke.adjustParticleLooks = function (particle) {
+			particle.rotation.x += (2 * Math.PI / 360) * 0.15;
 
 			// Sin wave with a period of 3000 and a random offset seeded by start time
-			let life = global.millis - particle[0];
-			let darkness = (1 / 255) * (180 + 50 * Math.sin((2*Math.PI / 3000) * (life + (randomSeed(particle[0]) * 3000))));
+			let life = global.millis - particle.startTime;
+			let darkness = (1 / 255) * (180 + 50 * Math.sin((2 * Math.PI / 3000) * (life + (randomSeed(particle.startTime) * 3000))));
+			particle.mesh.material.color = {r: darkness, g: darkness, b: darkness};
 
-			// console.log('d: '+ darkness);
-			particle[10].material.color = {r: darkness, g: darkness, b: darkness};
-			particle[10].material.opacity = Math.max(0, Math.min(0.2, -Math.abs(particle[1] * 0.1) + (smokeSpawnX * 0.1)));
+			// Decimal of total journey travelled clamped at 0.2, -2*|x-(max/2)|+max
+			// Account for deviation; use personal spawn & kill in particle.options
+			let totalDistance = particle.options.killX - particle.options.spawnX;
+			let currentDistance = particle.position.x - particle.options.spawnX;
+			let decimal = currentDistance / totalDistance;
+			let opacity = -2 * Math.abs(decimal-0.5) + 1;
+			particle.mesh.material.opacity = Math.max(0, Math.min(0.2, opacity));
 		};
 
 		// Add smoke to center before created smoke drifts in
-		for (let i = -smokeSpawnX; i < smokeSpawnX; i+=3) {
+		let interval = 2;
+		for (let i = 0; i < Math.abs(smokeKillX - smokeSpawnX) / interval; i += 1) {
+			let currentX = smokeSpawnX - (i * interval);
 			let [posx, posy, posz, deviationx, deviationy, deviationz, velx, vely, velz, rotx, roty, rotz] =
-				[-i, -20, 0, 20, 30, 30, -0.0025, 0, 0, Math.random() * (2 * Math.PI), 0, 0];
+				[currentX, -20, 0, 20, 30, 30, -0.0025, 0, 0, Math.random() * (2 * Math.PI), 0, 0];
+
+			let params = {
+				posx: posx + (Math.random() - .5) * deviationx,
+				posy: posy + (Math.random() - .5) * deviationy,
+				posz: posz + (Math.random() - .5) * deviationz,
+				velx: velx,
+				vely: vely,
+				velz: velz,
+				rotx: rotx,
+				roty: roty,
+				rotz: rotz
+			};
+
+			params.options = {
+				spawnX: params.posx + (i * interval),
+				killX: params.posx + (i * interval) + (smokeKillX - smokeSpawnX)
+			};
+
+			// console.log(params.options);
 
 			let p = global.smoke.createParticle(
 				scene,
-				posx + (Math.random() - .5) * deviationx,
-				posy + (Math.random() - .5) * deviationy,
-				posz + (Math.random() - .5) * deviationz,
-				velx,
-				vely,
-				velz,
-				rotx,
-				roty,
-				rotz,
+				params.posx,
+				params.posy,
+				params.posz,
+				params.velx,
+				params.vely,
+				params.velz,
+				params.rotx,
+				params.roty,
+				params.rotz,
+				params.options
 			);
 
 			// Random creation time to fix darkness synchronization
-			p[0] = Math.floor(Math.random() * 1000);
+			p.startTime = Math.floor(Math.random() * 1000);
 
 			global.smoke.particles.push(p);
 		}
@@ -197,13 +227,16 @@ global.onstart.push(function () {
 			let analyser = global.analyser;
 
 			var source = audioCtx.createMediaElementSource(global.audio);
-			source.connect(analyser);
+			source.connect(analyser)
 		}
 
 		global.audio.currentTime = startTime / 1000;
 		global.audio.src = 'data:audio/wav;base64,' + b64;
 
-		global.audio.play();
+		global.audio.play()
+			.catch((e) => {
+				console.log(e)
+			});
 	};
 
 	function addCamera(scene) {
@@ -281,9 +314,9 @@ global.onstart.push(function () {
 			// called when the resource is loaded
 			function (gltf) {
 
-				gltf.scene.position.set(0, 0, 0);
+				gltf.scene.position.set(0, -1, 0);
 				gltf.scene.scale.set(10, 10, 10);
-				gltf.scene.rotation.set(Math.PI/2, Math.PI, 0);
+				gltf.scene.rotation.set(Math.PI / 2, Math.PI, 0);
 
 				scene.add(gltf.scene);
 
@@ -292,7 +325,6 @@ global.onstart.push(function () {
 				console.log(gltf.scenes); // Array<THREE.Scene>
 				console.log(gltf.cameras); // Array<THREE.Camera>
 				console.log(gltf.asset); // Object
-				console.log('gb', gltf.morphTargetInfluences);
 				window.gruh = gltf;
 
 				completion(gltf.scene);
@@ -339,7 +371,7 @@ global.onstart.push(function () {
 		let freqData = getFreqData(analyser);
 
 		// average volume
-		return freqData.reduce( ( p, c ) => p + c, 0 ) / freqData.length;
+		return freqData.reduce((p, c) => p + c, 0) / freqData.length;
 	}
 
 	function getMouthInfluence(volume) {
@@ -356,7 +388,7 @@ global.onstart.push(function () {
 		let freqData = getFreqData(global.analyser);
 		freqData.splice(0, 85);
 		freqData.splice(255);
-		let avg = freqData.reduce( ( p, c ) => p + c, 0 ) / freqData.length;
+		let avg = freqData.reduce((p, c) => p + c, 0) / freqData.length;
 		let commonVoice = Math.max(0, Math.min(avg / 255.0, 1));
 
 		// favor commonVoice more depending on how much louder it is
@@ -371,7 +403,9 @@ global.onstart.push(function () {
 		let freqData = getFreqData(analyser);
 
 		// Use median of freq data
-		const sum = freqData.reduce((a,b)=>{return a+b});
+		const sum = freqData.reduce((a, b) => {
+			return a + b
+		});
 		let total = 0;
 		let found = false;
 		let median = null;
@@ -387,7 +421,7 @@ global.onstart.push(function () {
 
 		// Use average of three-quarters of freq data
 		freqData.splice(0, Math.floor(1 * freqData.length / 4));
-		let avg = freqData.reduce( ( p, c ) => p + c, 0 ) / freqData.length;
+		let avg = freqData.reduce((p, c) => p + c, 0) / freqData.length;
 		let squintInfluence2 = avg / 255;
 
 		// Use whichever is greater for the most effect
@@ -401,16 +435,16 @@ global.onstart.push(function () {
 		let blinkTime = 350;
 
 		return {
-			quadratic: Math.max(0, -1 * ((1/blinkTime) * (timeDiff-blinkTime))**2 + 1),
-			linear: Math.max(0, 1 - Math.abs(1 - timeDiff/blinkTime)),
-			sinusoidal: timeDiff > blinkTime ? 0 : 0.5*Math.sin(((2*Math.PI)/blinkTime)*(timeDiff-(blinkTime/4)))+0.5,
+			quadratic: Math.max(0, -1 * ((1 / blinkTime) * (timeDiff - blinkTime)) ** 2 + 1),
+			linear: Math.max(0, 1 - Math.abs(1 - timeDiff / blinkTime)),
+			sinusoidal: timeDiff > blinkTime ? 0 : 0.5 * Math.sin(((2 * Math.PI) / blinkTime) * (timeDiff - (blinkTime / 4))) + 0.5,
 
 		}
 	}
 
 	function getEyebrowInfluence(volume) {
 		// Calculate target and set lastVolume
-		let target = ((volume - (global.lastVolume || 0))/ 5);
+		let target = ((volume - (global.lastVolume || 0)) / 5);
 		global.lastVolume = volume;
 
 		// Set target to multiple of 1/intervals
@@ -425,7 +459,7 @@ global.onstart.push(function () {
 		// s = inverse speed, amount that difference is divided
 		let s = 10;
 		let current = global.currentEyebrowInfluence || 0;
-		let next = current + ((target - current/ 2) / s);
+		let next = current + ((target - current / 2) / s);
 		next = next > 1 ? 1.0 : (next < 0 ? 0 : next);
 
 		global.currentEyebrowInfluence = next;
@@ -440,43 +474,51 @@ global.onstart.push(function () {
 			return [x, y];
 		}
 		// console.log(prevx/(.9**dt));
-		return [prevx*(.9**dt), prevy*(.9**dt)];
+		return [prevx * (.9 ** dt), prevy * (.9 ** dt)];
 	}
 
 	function setMouthOpen(amount, gruh) {
 		if (!gruh) return;
-		gruh.traverse( function ( node ) {
-			if ( node.isMesh ){
+		gruh.traverse(function (node) {
+			if (node.isMesh) {
 				node.morphTargetInfluences[0] = amount;
 			}
-		} );
+		});
 	}
 
 	function setLeftEyeClosed(amount, gruh) {
 		if (!gruh) return;
-		gruh.traverse( function ( node ) {
-			if ( node.isMesh ){
+		gruh.traverse(function (node) {
+			if (node.isMesh) {
 				node.morphTargetInfluences[3] = amount;
 			}
-		} );
+		});
 	}
 
 	function setRightEyeClosed(amount, gruh) {
 		if (!gruh) return;
-		gruh.traverse( function ( node ) {
-			if ( node.isMesh ){
+		gruh.traverse(function (node) {
+			if (node.isMesh) {
 				node.morphTargetInfluences[2] = amount;
 			}
-		} );
+		});
 	}
 
 	function setEyebrowsRaised(amount, gruh) {
 		if (!gruh) return;
-		gruh.traverse( function ( node ) {
-			if ( node.isMesh ){
+		gruh.traverse(function (node) {
+			if (node.isMesh) {
 				node.morphTargetInfluences[1] = amount;
 			}
-		} );
+		});
+	}
+
+	function resize(renderer, camera) {
+		// Lookup the size the browser is displaying the canvas.
+		camera.aspect = window.innerWidth / window.innerHeight;
+		camera.updateProjectionMatrix();
+
+		renderer.setSize(window.innerWidth, window.innerHeight);
 	}
 
 	function render() {
@@ -514,15 +556,23 @@ global.onstart.push(function () {
 
 		// Attach the renderer-supplied
 		// DOM element.
+		renderer.domElement.id = 'canvas';
 		container.appendChild(renderer.domElement);
 
-		window.addEventListener('mousedown', function() {global.mouseDown = true});
-		window.addEventListener('mouseup', function() {global.mouseDown = false});
+		window.addEventListener('mousedown', function () {
+			global.mouseDown = true
+		});
+		window.addEventListener('mouseup', function () {
+			global.mouseDown = false
+		});
+		window.addEventListener('resize', function () {
+			resize(renderer, camera)
+		});
 
 		function update() {
 			// Draw!
 			let ct = new Date().getTime();
-			global.dt = ct - global.millis;
+			global.deltaTime = ct - global.millis;
 			global.millis = ct;
 
 			renderer.render(scene, camera);
@@ -530,13 +580,13 @@ global.onstart.push(function () {
 			controls.update();
 
 			let vol = getVolume(global.analyser);
-			global.volumeInterp += (vol - global.volumeInterp) * .01 * global.dt;
+			global.volumeInterp += (vol - global.volumeInterp) * .01 * global.deltaTime;
 
 			setMouthOpen(getMouthInfluence(global.volumeInterp), gruh);
 
 			setEyebrowsRaised(getEyebrowInfluence(global.volumeInterp), gruh);
 
-			let bruh = getHeadRotation(global.mouseDown, 1, 0, global.headx, global.heady, global.dt);
+			let bruh = getHeadRotation(global.mouseDown, 1, 0, global.headx, global.heady, global.deltaTime);
 			global.headx = bruh[0];
 			global.heady = bruh[1];
 
@@ -551,8 +601,8 @@ global.onstart.push(function () {
 				, gruh);
 
 			// update particle system
-			if (global.showEmbers) global.embers.updateParticles(global.millis, global.dt, scene);
-			if (global.showSmoke) global.smoke.updateParticles(global.millis, global.dt, scene);
+			if (global.showEmbers) global.embers.updateParticles(global.millis, global.deltaTime, scene);
+			if (global.showSmoke) global.smoke.updateParticles(global.millis, global.deltaTime, scene);
 
 			// Schedule the next frame.
 			requestAnimationFrame(update);
@@ -565,17 +615,21 @@ global.onstart.push(function () {
 	render();
 });
 
-global.start = function() {
+global.start = function () {
 	for (let i = 0; i < global.onstart.length; i++) {
 		global.onstart[i]();
 	}
 };
 
 document.getElementById('start').onclick = () => {
-	let blocker = $('#blocker');
-	blocker.fadeOut(2000, ()=>{
-		blocker.remove();
-	});
+	if (!global.hasStarted) {
+		global.hasStarted = true;
 
-	global.start()
+		let blocker = $('#blocker');
+		blocker.fadeOut(2000, () => {
+			blocker.remove();
+		});
+
+		global.start()
+	}
 };

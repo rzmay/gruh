@@ -3,19 +3,17 @@ class ParticleSystem {
     constructor(type, getMesh, killCondition, updateWhileInactive=true) {
         this.particles = [];
 
-        this.isSprite = type == 'sprite' ? true : false;
+        this.isSprite = (type === 'sprite');
         this.isMesh = !this.isSprite;
 
         this.getMesh = getMesh;
         this.killCondition = killCondition;
 
         this.updateWhileInactive = updateWhileInactive;
-        // particle = [startTime, posx, posy, posz, velx, vely, velz, rotx, roty, rotz, object]
 
         this.windowIsActive = true;
 
         // Set up window activity detection
-        console.log(this.windowIsActive);
         $(window).focus(function() {
             self.windowIsActive = true;
         });
@@ -25,7 +23,7 @@ class ParticleSystem {
         });
     }
 
-    createParticle(scene, posx, posy, posz, velx, vely, velz, rotx, roty, rotz) {
+    createParticle(scene, posx, posy, posz, velx, vely, velz, rotx, roty, rotz, options) {
         var mesh = this.getMesh();
 
         mesh.position.x = posx;
@@ -42,7 +40,16 @@ class ParticleSystem {
         }
 
         scene.add(mesh);
-        return Array(global.millis, posx, posy, posz, velx || 0, vely || 0, velz ||0, rotx || 0, roty || 0, rotz || 0, mesh);
+
+        return new Particle(
+          new THREE.Vector3(posx || 0, posy || 0, posz || 0),
+          new THREE.Vector3(velx || 0, vely || 0, velz || 0),
+          new THREE.Vector3(rotx || 0, roty || 0, rotz || 0),
+          global.millis,
+          mesh,
+          options,
+          this.isSprite
+        );
 
         // TODO: IF WE CAN RAW DRAW 2D STUFF THIS CAN GO AND WE CAN JUST DRAW ALL THE PARTICLES IN ONE FUNC
     }
@@ -64,6 +71,7 @@ class ParticleSystem {
                   params.rotx,
                   params.roty,
                   params.rotz,
+                  params.options
                 ));
             })
         }
@@ -71,45 +79,35 @@ class ParticleSystem {
 
     setSpawnInterval(scene, amount, time) {
         let self = this;
-        return window.setInterval(function () {
-            // If inactive and updateWhileInactive is disabled, return
-            if (!self.updateWhileInactive && !self.windowIsActive) { return }
-
-            self.addParticles(scene, amount);
+        return setInterval(()=>{
+            self.spawn(scene, amount);
         }, time);
     }
 
-    applyParticleForces(dt, particle) {}
-    // specific per particle system, including drag
+    spawn(scene, amount) {
+        // If inactive and updateWhileInactive is disabled, return
+        if (!this.updateWhileInactive && !this.windowIsActive) { return }
+
+        this.addParticles(scene, amount);
+    }
 
     updateParticles(millis, dt, scene) {
         // If inactive and updateWhileInactive is disabled, return
         if (!this.updateWhileInactive && !this.windowIsActive) { return }
 
+        // If there are no particles to update, return
+        if (this.particles.length < 1) { return }
+
         for (let i = this.particles.length - 1; i >= 0; i--) {
             let particle = this.particles[i];
             if (this.killCondition(particle, self)) {
-                scene.remove(this.particles[i][10]);
+                this.onParticleKill(particle);
+                scene.remove(this.particles[i].mesh);
                 this.particles.splice(i, 0);
             } else {
                 this.applyParticleForces(dt, particle);
                 this.adjustParticleLooks(particle);
-                particle[1] += particle[4] * dt;
-                particle[2] += particle[5] * dt;
-                particle[3] += particle[6] * dt;
-
-                particle[10].position.x = particle[1];
-                particle[10].position.y = particle[2];
-                particle[10].position.z = particle[3];
-
-                if (this.isSprite) {
-                    let material = particle[10].material;
-                    material.rotation = particle[7];
-                } else {
-                    particle[10].rotation.x = particle[7];
-                    particle[10].rotation.y = particle[8];
-                    particle[10].rotation.z = particle[9];
-                }
+                particle.move(dt);
             }
         }
         // console.log(this.particles[0]);
@@ -120,4 +118,9 @@ class ParticleSystem {
     adjustParticleLooks(particle, lifetime) {}
     // specific per particle
 
+    applyParticleForces(dt, particle) {}
+    // specific per particle system, including drag
+
+    onParticleKill(particle) {}
+    // specific per particle system
 }
