@@ -1,6 +1,6 @@
 class ParticleSystem {
 
-    constructor(type, getMesh, killCondition) {
+    constructor(type, getMesh, killCondition, updateWhileInactive=true) {
         this.particles = [];
 
         this.isSprite = type == 'sprite' ? true : false;
@@ -9,8 +9,20 @@ class ParticleSystem {
         this.getMesh = getMesh;
         this.killCondition = killCondition;
 
+        this.updateWhileInactive = updateWhileInactive;
         // particle = [startTime, posx, posy, posz, velx, vely, velz, rotx, roty, rotz, object]
 
+        this.windowIsActive = true;
+
+        // Set up window activity detection
+        console.log(this.windowIsActive);
+        $(window).focus(function() {
+            self.windowIsActive = true;
+        });
+
+        $(window).blur(function() {
+            self.windowIsActive = false;
+        });
     }
 
     createParticle(scene, posx, posy, posz, velx, vely, velz, rotx, roty, rotz) {
@@ -57,16 +69,23 @@ class ParticleSystem {
         }
     }
 
-    // setSpawnInterval(amt, interval, posx, posy, deviationx, deviationy, velx, vely) {
-    // 	window.setInterval(function() {
-    // 		this.addParticles(amt, posx, posy, deviationx || 0, deviationy || 0, velx || 0, vely || 0);
-    // 	}, interval);
-    // }
+    setSpawnInterval(scene, amount, time) {
+        let self = this;
+        return window.setInterval(function () {
+            // If inactive and updateWhileInactive is disabled, return
+            if (!self.updateWhileInactive && !self.windowIsActive) { return }
+
+            self.addParticles(scene, amount);
+        }, time);
+    }
 
     applyParticleForces(dt, particle) {}
     // specific per particle system, including drag
 
     updateParticles(millis, dt, scene) {
+        // If inactive and updateWhileInactive is disabled, return
+        if (!this.updateWhileInactive && !this.windowIsActive) { return }
+
         for (let i = this.particles.length - 1; i >= 0; i--) {
             let particle = this.particles[i];
             if (this.killCondition(particle, self)) {

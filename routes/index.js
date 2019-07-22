@@ -3,7 +3,7 @@ const fs = require('fs');
 var express = require('express');
 var socket = require('socket.io');
 
-
+const config = require('../config');
 var AudioManager = require('../classes/audio_manager.js');
 
 var router = express.Router();
@@ -13,11 +13,11 @@ var soundPath = '../audio/sound.mp3';
 
 /* GET home page. */
 router.get('/', function(req, res, next) {
-  res.render('index', { title: 'Gruh', main: true });
+  res.render('index', { title: 'Gruh', main: true, info: config});
 });
 
 router.get('/you', function(req, res, next) {
-  res.render('index', { title: 'Gruh (Your Voice)', main: false});
+  res.render('index', { title: 'Gruh (Your Voice)', main: false, info: config});
 });
 
 io.on('connect', (socket) => {

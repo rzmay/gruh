@@ -27,7 +27,7 @@ global.onstart.push(function () {
 
 	function setUpParticleSystems(scene) {
 
-		global.canvas = document.getElementById("container").childNodes[0];
+		global.canvas = document.getElementById('container').childNodes[0];
 
 		// Set up which particles to show
 		global.showEmbers = true;
@@ -41,7 +41,7 @@ global.onstart.push(function () {
 		let embersTexture = new THREE.TextureLoader().load('images/particle_embers.png');
 
 		global.embers = new ParticleSystem(
-			'mesh',
+			'sprite',
 			()=>{
 				var material = new THREE.SpriteMaterial({color: 0xffffff, map: embersTexture, transparent: true});
 				material.transparent = true;
@@ -53,7 +53,8 @@ global.onstart.push(function () {
 			},
 			(particle, self)=>{
 				return global.millis - particle[0] > embersLifetime;
-			}
+			},
+			false
 		);
 
 		// Custom property for embers
@@ -93,13 +94,8 @@ global.onstart.push(function () {
 			particle[10].material.color = {r: 1, g: 1 - life * 1.5, b: 1 - life * 3};
 		};
 
-
-
-		// global.embers.setSpawnInterval(10, 700, 200, 0, 400, 10);
 		if (global.showEmbers) {
-			setInterval(function() {
-				global.embers.addParticles(scene, 2);
-			}, 200);
+			global.emberInterval = global.embers.setSpawnInterval(scene, 2, 200);
 		}
 
 		// Smoke
@@ -121,7 +117,8 @@ global.onstart.push(function () {
 			},
 			(particle, self)=>{
 				return (particle[1] > smokeSpawnX);
-			}
+			},
+			false
 		);
 
 		global.smoke.getNewParticle= function(createParticle) {
@@ -179,48 +176,54 @@ global.onstart.push(function () {
 			global.smoke.particles.push(p);
 		}
 
-		// global.smoke.setSpawnInterval(10, 700, 200, 0, 400, 10);
 		if (global.showSmoke) {
-			setInterval(function () {
-				global.smoke.addParticles(scene, 1);
-			}, 400);
+			global.smokeInterval = global.smoke.setSpawnInterval(scene, 1, 400);
 		}
 	}
 
 	global.playSound = function (b64, startTime) {
 		console.log(b64);
 
-		var sound = new Audio("data:audio/wav;base64," + b64);
-		sound.id = 'audio';
-		sound.controls = false;
-		sound.currentTime = startTime / 1000;
-		sound.type = 'audio/mp3';
-		sound.autoplay = true;
+		if (!global.audio) {
+			let sound = new Audio('');
+			sound.id = 'audio';
+			sound.controls = false;
+			sound.type = 'audio/mp3';
 
+			document.body.appendChild(sound);
+			global.audio = document.getElementById('audio');
 
-		let audioCtx = global.audioContext;
-		let analyser = global.analyser;
+			let audioCtx = global.audioContext;
+			let analyser = global.analyser;
 
-		document.body.appendChild(sound);
+			var source = audioCtx.createMediaElementSource(global.audio);
+			source.connect(analyser);
+		}
 
-		var audio = document.getElementById('audio');
+		global.audio.currentTime = startTime / 1000;
+		global.audio.src = 'data:audio/wav;base64,' + b64;
 
-		audio.onended = () => {
-			audio.parentElement.removeChild(audio);
-		};
-
-		var source = audioCtx.createMediaElementSource(audio);
-
-		source.connect(analyser);
+		global.audio.play();
 	};
 
 	function addCamera(scene) {
 		// Set some camera attributes.
+		// Perspective Camera
 		const VIEW_ANGLE = 1;
 		const ASPECT = WIDTH / HEIGHT;
-		const NEAR = 10;
-		const FAR = 100000;
 
+		// Orthographic Camera
+		const FRUSTUM_LEFT = WIDTH / -2;
+		const FRUSTUM_RIGHT = WIDTH / 2;
+		const FRUSTUM_TOP = HEIGHT / 2;
+		const FRUSTUM_BOTTOM = HEIGHT / -2;
+
+
+		// Both
+		const NEAR = 10;
+		const FAR = 10000;
+
+		// Perspective Camera
 		const camera =
 			new THREE.PerspectiveCamera(
 				VIEW_ANGLE,
@@ -228,6 +231,17 @@ global.onstart.push(function () {
 				NEAR,
 				FAR
 			);
+
+		// Orthographic Camera
+		// var camera =
+		// 	new THREE.OrthographicCamera(
+		// 		FRUSTUM_LEFT,
+		// 		FRUSTUM_RIGHT,
+		// 		FRUSTUM_TOP,
+		// 		FRUSTUM_BOTTOM,
+		// 		NEAR,
+		// 		FAR
+		// 	);
 
 		scene.add(camera);
 
@@ -278,7 +292,7 @@ global.onstart.push(function () {
 				console.log(gltf.scenes); // Array<THREE.Scene>
 				console.log(gltf.cameras); // Array<THREE.Camera>
 				console.log(gltf.asset); // Object
-				console.log("gb", gltf.morphTargetInfluences);
+				console.log('gb', gltf.morphTargetInfluences);
 				window.gruh = gltf;
 
 				completion(gltf.scene);
@@ -558,8 +572,10 @@ global.start = function() {
 };
 
 document.getElementById('start').onclick = () => {
-	let elem = document.getElementById('blocker');
-	elem.parentNode.removeChild(elem);
+	let blocker = $('#blocker');
+	blocker.fadeOut(2000, ()=>{
+		blocker.remove();
+	});
 
 	global.start()
 };
