@@ -1,12 +1,14 @@
 const MerchTag = require('./classes/merch_tag');
 
 let config = {
-	"permittedFrequencyMultipliers": [
+	'permittedFrequencyMultipliers': [
 		1,
 		2,
 		5,
 		10
-	]
+	],
+	'maxFileSize': 1,
+	'maxAudioDuration': 15000
 };
 
 config.featuredMerch = [

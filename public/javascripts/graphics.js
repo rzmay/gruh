@@ -4,8 +4,6 @@ let global = {};
 
 global.onstart = [];
 global.onstart.push(function () {
-	const WIDTH = window.innerWidth;
-	const HEIGHT = window.innerHeight + 20;
 
 	function setUpAudioContext() {
 		var audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -26,6 +24,8 @@ global.onstart.push(function () {
 	}
 
 	function setUpParticleSystems(scene) {
+		global.particleCount = 0;
+		global.maxParticles = 256;
 
 		global.canvas = document.getElementById('container').childNodes[0];
 
@@ -94,9 +94,11 @@ global.onstart.push(function () {
 			global.embersInterval = global.embers.setSpawnInterval(scene, 2, 200);
 		}
 
+
+
 		// Smoke
 		let smokeTexture = new THREE.TextureLoader().load('images/particle_smoke_1.png');
-		let smokeSpawnX = 75;
+		let smokeSpawnX = -50;
 		let smokeKillX = -smokeSpawnX;
 
 		global.smoke = new ParticleSystem(
@@ -113,13 +115,13 @@ global.onstart.push(function () {
 				return sprite;
 			},
 			(particle, self) => {
-				return (particle.position.x < particle.options.killX);
+				return (particle.position.x > particle.options.killX);
 			}
 		);
 
-		global.smoke.getNewParticle = function (createParticle) {
+		function getSmokeParams(spawnX) {
 			let [posx, posy, posz, deviationx, deviationy, deviationz, velx, vely, velz, rotx, roty, rotz] =
-				[smokeSpawnX, -20, 0, 20, 30, 30, -0.0025, 0, 0, Math.random() * (2 * Math.PI), 0, 0];
+				[spawnX, -15, 0, 60, 20, 40, 0.0025, 0, 0, Math.random() * (2 * Math.PI), 0, 0];
 
 			let params = {
 				posx: posx + (Math.random() - .5) * deviationx,
@@ -133,9 +135,15 @@ global.onstart.push(function () {
 				rotz: rotz
 			};
 
+			return params
+		}
+
+		global.smoke.getNewParticle = function (createParticle) {
+			let params = getSmokeParams(smokeSpawnX);
+
 			params.options = {
 				spawnX: params.posx,
-				killX: params.posx + (smokeKillX - smokeSpawnX)
+				killX: params.posx + Math.abs(smokeKillX - smokeSpawnX)
 			};
 
 			// console.log(params.options);
@@ -153,35 +161,24 @@ global.onstart.push(function () {
 
 			// Decimal of total journey travelled clamped at 0.2, -2*|x-(max/2)|+max
 			// Account for deviation; use personal spawn & kill in particle.options
-			let totalDistance = particle.options.killX - particle.options.spawnX;
+			let totalDistance =  particle.options.killX - particle.options.spawnX;
 			let currentDistance = particle.position.x - particle.options.spawnX;
 			let decimal = currentDistance / totalDistance;
+
 			let opacity = -2 * Math.abs(decimal-0.5) + 1;
+
 			particle.mesh.material.opacity = Math.max(0, Math.min(0.2, opacity));
 		};
 
 		// Add smoke to center before created smoke drifts in
 		let interval = 2;
 		for (let i = 0; i < Math.abs(smokeKillX - smokeSpawnX) / interval; i += 1) {
-			let currentX = smokeSpawnX - (i * interval);
-			let [posx, posy, posz, deviationx, deviationy, deviationz, velx, vely, velz, rotx, roty, rotz] =
-				[currentX, -20, 0, 20, 30, 30, -0.0025, 0, 0, Math.random() * (2 * Math.PI), 0, 0];
-
-			let params = {
-				posx: posx + (Math.random() - .5) * deviationx,
-				posy: posy + (Math.random() - .5) * deviationy,
-				posz: posz + (Math.random() - .5) * deviationz,
-				velx: velx,
-				vely: vely,
-				velz: velz,
-				rotx: rotx,
-				roty: roty,
-				rotz: rotz
-			};
+			let currentX = smokeSpawnX + (i * interval);
+			let params = getSmokeParams(currentX);
 
 			params.options = {
-				spawnX: params.posx + (i * interval),
-				killX: params.posx + (i * interval) + (smokeKillX - smokeSpawnX)
+				spawnX: params.posx - (i * interval),
+				killX: params.posx - (i * interval) + Math.abs(smokeKillX - smokeSpawnX)
 			};
 
 			// console.log(params.options);
@@ -241,6 +238,9 @@ global.onstart.push(function () {
 
 	function addCamera(scene) {
 		// Set some camera attributes.
+		const WIDTH = window.innerWidth;
+		const HEIGHT = window.innerHeight;
+
 		// Perspective Camera
 		const VIEW_ANGLE = 1;
 		const ASPECT = WIDTH / HEIGHT;
@@ -276,22 +276,22 @@ global.onstart.push(function () {
 		// 		FAR
 		// 	);
 
+		camera.position.set(0, 100, 1750);
 		scene.add(camera);
 
-		var controls = new THREE.OrbitControls(camera);
-		camera.position.set(0, 100, -1750);
-		controls.update();
+		// var controls = new THREE.OrbitControls(camera);
+		// controls.update();
 
-		controls.maxZoom = 20;
+		// controls.maxZoom = 20;
 		// controls.minAzimuthAngle = -Math.PI/6;
 		// controls.maxAzimuthAngle = Math.PI/6;
 		// controls.minPolarAngle = -Math.PI/6;
 		// controls.maxPolarAngle = Math.PI/6;
 
-		controls.enablePan = false;
-		controls.enableZoom = false;
+		// controls.enablePan = false;
+		// controls.enableZoom = false;
 
-		return {camera: camera, controls: controls}
+		return {camera: camera, controls: null};
 	}
 
 	function getRenderer() {
@@ -300,23 +300,23 @@ global.onstart.push(function () {
 		renderer.gammaOutput = true;
 		renderer.gammaFactor = 2.2;
 
-		renderer.setSize(WIDTH, HEIGHT);
+		renderer.setSize(window.innerWidth, window.innerHeight);
 
 		return renderer;
 	}
 
-	function addMesh(scene, completion) {
+	function getMesh(scene, completion) {
 		let loader = new THREE.GLTFLoader();
 
 		loader.load(
 			// resource URL
-			'gruh_zUp.glb',
+			'gruh_eyes.glb',
 			// called when the resource is loaded
 			function (gltf) {
 
 				gltf.scene.position.set(0, -1, 0);
 				gltf.scene.scale.set(10, 10, 10);
-				gltf.scene.rotation.set(Math.PI / 2, Math.PI, 0);
+				gltf.scene.rotation.set(0, 0, 0);
 
 				scene.add(gltf.scene);
 
@@ -355,7 +355,7 @@ global.onstart.push(function () {
 	function addLights(transforms, scene) {
 		for (let i = 0; i < transforms.length; i++) {
 			const pointLight =
-				new THREE.PointLight(0xFFFFFF);
+				new THREE.PointLight(0x444444);
 
 			// set its position
 			pointLight.position.x = transforms[i].x;
@@ -521,6 +521,23 @@ global.onstart.push(function () {
 		renderer.setSize(window.innerWidth, window.innerHeight);
 	}
 
+	function moveEyes(eyes, camera) {
+		for (var eye of Object.values(eyes)) {
+			// slerp for smooth movement
+			let current = new THREE.Quaternion().copy(eye.quaternion);
+
+			eye.lookAt(camera.position);
+			let target = new THREE.Quaternion().copy(eye.quaternion);
+
+			THREE.Quaternion.slerp(current, target, eye.quaternion, 0.05);
+
+			// Get direction to camera
+			// let angle = eye.position.angleTo(camera.position);
+			// eye.rotation.setFromVector3(eye.rotation.toVector3.add(angle.toVector3()));
+
+		}
+	}
+
 	function render() {
 		// Get the DOM element to attach to
 		const container =
@@ -528,10 +545,22 @@ global.onstart.push(function () {
 
 		const scene = new THREE.Scene();
 
+		// var axesHelper = new THREE.AxesHelper( 500 );
+		// scene.add( axesHelper );
+
 		let {camera, controls} = addCamera(scene);
 		let renderer = getRenderer();
 
 		let gruh;
+		let eyes = {
+			right: null,
+			left: null
+		};
+
+		global.mouse = {
+			x:0,
+			y:0
+		};
 
 		global.dt = 16;
 		global.millis = new Date().getTime();
@@ -540,14 +569,16 @@ global.onstart.push(function () {
 		global.headx = 0;
 		global.heady = 0;
 
-		addMesh(scene, (mesh) => {
-			gruh = mesh;
+		getMesh(scene,(mesh) => {
+			gruh = mesh.getObjectByName('Head');
+			eyes.right = mesh.getObjectByName('Eye_R');
+			eyes.left = mesh.getObjectByName('Eye_L');
 		});
 
 		addLights([
-			{x: 10, y: 50, z: -300},
-			{x: -100, y: 200, z: 200},
-			{x: 10, y: 10000, z: 10}], scene);
+			{x: -10, y: 50, z: 300},
+			{x: 100, y: 200, z: -200},
+			{x: -10, y: 10000, z: -10}], scene);
 
 		setUpAudioContext();
 
@@ -568,6 +599,12 @@ global.onstart.push(function () {
 		window.addEventListener('resize', function () {
 			resize(renderer, camera)
 		});
+		window.addEventListener('mousemove', function (e) {
+			global.mouse = {
+				x: ( e.clientX - window.innerWidth/2 ),
+				y: ( e.clientY - window.innerHeight/2 )
+			}
+		});
 
 		function update() {
 			// Draw!
@@ -577,19 +614,35 @@ global.onstart.push(function () {
 
 			renderer.render(scene, camera);
 
-			controls.update();
+			// Move Camera
+			// controls.update();
+
+			function orbit(camera, point, axis, theta) {
+				camera.position.sub(point); // remove the offset
+				camera.position.applyAxisAngle(axis, theta); // rotate the POSITION
+				camera.position.add(point);
+			}
+
+			// orbit(camera, scene.position, new THREE.Vector3(0, 1, 0), global.mouse.x / window.innerWidth);
+			camera.position.x += ( (global.mouse.x || 0) - camera.position.x ) * .05;
+			camera.position.y += ( - ((global.mouse.y / 1.5) || 0) - camera.position.y ) * .05;
+
+			camera.lookAt( scene.position );
 
 			let vol = getVolume(global.analyser);
 			global.volumeInterp += (vol - global.volumeInterp) * .01 * global.deltaTime;
 
+			// Open Mouth
 			setMouthOpen(getMouthInfluence(global.volumeInterp), gruh);
 
+			// Raise Eyebrows
 			setEyebrowsRaised(getEyebrowInfluence(global.volumeInterp), gruh);
 
-			let bruh = getHeadRotation(global.mouseDown, 1, 0, global.headx, global.heady, global.deltaTime);
-			global.headx = bruh[0];
-			global.heady = bruh[1];
+			// let headRotation = getHeadRotation(global.mouseDown, 1, 0, global.headx, global.heady, global.deltaTime);
+			// global.headx = headRotation[0];
+			// global.heady = headRotation[1];
 
+			// Blink
 			setLeftEyeClosed(
 				Math.max(
 					getSquintInfluence(global.analyser),
@@ -599,6 +652,14 @@ global.onstart.push(function () {
 				getSquintInfluence(global.analyser),
 				getEyeInfluence(global.blinkEyeRightTime).sinusoidal || 0)
 				, gruh);
+
+			// Move Eyes
+			try {
+				moveEyes(eyes, camera);
+			} catch(e) {
+				// Eyes not yet loaded
+				console.log(e);
+			}
 
 			// update particle system
 			if (global.showEmbers) global.embers.updateParticles(global.millis, global.deltaTime, scene);

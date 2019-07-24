@@ -4,7 +4,8 @@ var express = require('express');
 var socket = require('socket.io');
 
 const config = require('../config');
-var AudioManager = require('../classes/audio_manager.js');
+var AudioManager = require('../classes/audio_manager');
+var audioUploadHelper = require('../classes/audio_upload_helper');
 
 var router = express.Router();
 var audioManager = new AudioManager();
@@ -16,8 +17,26 @@ router.get('/', function(req, res, next) {
   res.render('index', { title: 'Gruh', main: true, info: config});
 });
 
+/* GET microphone page */
 router.get('/you', function(req, res, next) {
   res.render('index', { title: 'Gruh (Your Voice)', main: false, info: config});
+});
+
+/* POST audio file to check size & length */
+router.post('/audio.check', function(req, res, next) {
+  // End if either parameter is null
+  audioUploadHelper.processUploadCheckReq(req, (response)=>{
+    if (response.success) {
+      res.send(response);
+    } else {
+      res.status(400).send(response);
+    }
+  })
+});
+
+/* POST audio file for upload to database; also return analytics tracker */
+router.post('/audio-upload', function(req, res, next) {
+  
 });
 
 io.on('connect', (socket) => {
@@ -28,7 +47,6 @@ io.on('connect', (socket) => {
 
 function sendSound() {
   // Get path to sound file
-  console.log('sendSound call');
   var paths = ['/../audio/sound.mp3', '/../audio/sound2.mp3', '/../audio/dirty_baby.mp3', '/../audio/jude_laughing.mp3'];
   soundPath = paths[Math.floor(Math.random()*paths.length)];
 
@@ -38,7 +56,6 @@ function sendSound() {
   audioManager.startPlaying(soundPath, io);
   audioManager.on('end', ()=>{
     setTimeout(()=>{
-      console.log('sendSound over');
       sendSound()
     }, 7000);
   });

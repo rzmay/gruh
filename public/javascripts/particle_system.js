@@ -87,8 +87,10 @@ class ParticleSystem {
     spawn(scene, amount) {
         // If inactive and updateWhileInactive is disabled, return
         if (!this.updateWhileInactive && !this.windowIsActive) { return }
-
-        this.addParticles(scene, amount);
+        if (global.particleCount < global.maxParticles) {
+            this.addParticles(scene, amount);
+            global.particleCount += 1;
+        }
     }
 
     updateParticles(millis, dt, scene) {
@@ -103,7 +105,8 @@ class ParticleSystem {
             if (this.killCondition(particle, self)) {
                 this.onParticleKill(particle);
                 scene.remove(this.particles[i].mesh);
-                this.particles.splice(i, 0);
+                this.particles.splice(i, 1);
+                global.particleCount -= 1;
             } else {
                 this.applyParticleForces(dt, particle);
                 this.adjustParticleLooks(particle);

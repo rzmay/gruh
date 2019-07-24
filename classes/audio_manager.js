@@ -34,7 +34,6 @@ var AudioManager = class {
 	}
 
 	startPlaying(file, io) {
-		console.log('startPlaying call');
 		this.filepath = file;
 
 		// Send sound from start to any clients already connected
@@ -52,7 +51,6 @@ var AudioManager = class {
 
 				// start playing
 				setTimeout(()=>{
-					console.log('startPlaying over');
 					self.playStart = null;
 					self.filepath = null;
 					self.fileLength = 0;

@@ -39,29 +39,27 @@ block content
                             div.card-body
                                 h3.card-title.mb-2 Tell Gruh what to say!
                                 p2.mb-5.small= info.shortDescription
-                                form#uploadForm
+                                form.needs-validation#uploadForm(enctype='multipart/form-data')
                                     div.form-row
-                                        div.custom-file
-                                            input.custom-file-input#audioInput(type='file', accept='.mp3,audio/mpeg3', required=true)
+                                        div.custom-file#fileInputContainer
+                                            input.custom-file-input#audioInput(type='file', accept='.mp3,audio/mpeg3', required=true, name='audioFile')
                                             label.custom-file-label#audioInputLabel(for='audioInput') Choose file...
-                                            div.invalid-tooltip Please choose a valid mp3 file.
+                                            div.invalid-tooltip#invalidFileTooltip Please choose a valid mp3 file.
                                     div.form-row
-                                        div.col-3.form-group
-                                            label(for='authentication') Authentication
-                                            input.form-control#authentication(type='text', placeholder='nothing')
                                         div.col-3.form-group
                                             label(for='frequencyMultiplier') Frequency Multiplier
                                             select.form-control#frequencyMultiplier(name='frequencyMultiplier')
-                                                option 2
-                                                option 1
-                                                // each option in info.permittedFrequencyMultipliers
-                                                //     option #{option}
+                                                each option in info.permittedFrequencyMultipliers
+                                                    option #{option}
                                         div.col-3.form-group
                                             label(for='uploadPrice') Price
                                             div.input-group
                                                 div.input-group-prepend
                                                     span.input-group-text $
-                                                input.form-control#uploadPrice(type='text', placeholder='0.00')
+                                                input.form-control#uploadPrice(type='text', placeholder='0.00', readonly=true)
+                                        div.col-3.form-group
+                                            label(for='authentication') Authentication
+                                            input.form-control#authentication(type='text', placeholder='nothing', readonly=true)
                                         div.col-3.form-group
 
                                             button.btn.btn-success#submitButton(type='submit') Submit

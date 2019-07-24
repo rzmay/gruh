@@ -7,14 +7,27 @@
   },
   "dependencies": {
     "atob": "^2.1.2",
+    "based-blob": "^1.0.1",
+    "body-parser": "^1.19.0",
+    "connect-busboy": "0.0.2",
+    "connect-form": "^0.2.1",
+    "content-type": "^1.0.4",
     "cookie-parser": "~1.4.3",
     "debug": "~2.6.9",
     "express": "~4.16.0",
+    "express-fileupload": "^1.1.5",
+    "express-form-data": "^2.0.10",
+    "formidable": "^1.2.1",
     "fs": "0.0.1-security",
     "get-audio-duration": "^1.0.0",
     "http-errors": "~1.6.2",
     "morgan": "~1.9.0",
+    "multer": "^1.4.2",
     "pug": "^2.0.3",
-    "socket.io": "^2.2.0"
+    "raw-body": "^2.4.1",
+    "socket.io": "^2.2.0",
+    "stream-buffers": "^3.0.2",
+    "streamifier": "^0.1.1",
+    "tmp": "^0.1.0"
   }
 }
