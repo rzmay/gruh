@@ -624,8 +624,10 @@ global.onstart.push(function () {
 			}
 
 			// orbit(camera, scene.position, new THREE.Vector3(0, 1, 0), global.mouse.x / window.innerWidth);
-			camera.position.x += (- (global.mouse.x || 0) - camera.position.x ) * .05;
-			camera.position.y += ( ((global.mouse.y / 1.5) || 0) - camera.position.y ) * .05;
+
+			// Camera moves where mouse moves (you fool. I will bash you)
+			camera.position.x += ( (global.mouse.x || 0) - camera.position.x ) * .05;
+			camera.position.y += ( - ((global.mouse.y / 1.5) || 0) - camera.position.y ) * .05;
 
 			camera.lookAt( scene.position );
 
