@@ -47,8 +47,8 @@ io.on('connect', (socket) => {
 
 function sendSound() {
   // Get path to sound file
-  var paths = ['/../audio/sound.mp3', '/../audio/sound2.mp3', '/../audio/dirty_baby.mp3', '/../audio/jude_laughing.mp3'];
-  soundPath = paths[Math.floor(Math.random()*paths.length)];
+  // var paths = ['/../audio/sound.mp3', '/../audio/sound2.mp3', '/../audio/dirty_baby.mp3', '/../audio/jude_laughing.mp3'];
+  // soundPath = paths[Math.floor(Math.random()*paths.length)];
 
   // Override
   soundPath = '/../audio/jude_laughing.mp3';
