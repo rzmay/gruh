@@ -28,6 +28,22 @@ for (var i = 0; i < config.featuredMerch.length; i++) {
 	merchCard.append(config.featuredMerch[i].html);
 }
 
+/* MENU CREDITS */
+let credits = $('#creditsList');
+
+function createCreditElement(credit) {
+	return `<div class='list-group-item'>
+			<h5 class='text-center'><a href='${credit.page}'>${credit.name || ''}</a></h5>
+			<p2 class='text-center'>${credit.role || ''}</p2>
+			<br>
+			<a class='text-center' href='${credit.license}'>${credit.license || ''}</a>
+		</div>`;
+}
+
+for (let credit of config.credits) {
+	credits.append(createCreditElement(credit))
+}
+
 /* FILE UPLOAD */
 let form = $('#uploadForm');
 let fileLabel = $('#audioInputLabel');

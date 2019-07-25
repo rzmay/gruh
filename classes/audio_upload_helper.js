@@ -111,7 +111,7 @@ class AudioUploadHelper {
 		let scaledCost = (baseCost * frequencyMultiplier);
 
 		// Subtract a small amount scaled with frequencyMultiplier from scaledCost so that higher frequencies are better deals
-		let differenceScale = 0.1;
+		let differenceScale = 0.05;
 		let finalCost = scaledCost - (differenceScale * (frequencyMultiplier - 1));
 
 		// Round and return cost

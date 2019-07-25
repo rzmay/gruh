@@ -17,6 +17,17 @@ global.onstart.push(function () {
 		global.volumeInterp = 0;
 	}
 
+	function setUpSFX() {
+		SFXManager.startWhiteNoise();
+
+		SFXManager.startFadeLoop('cello');
+		SFXManager.startFadeLoop('bugs');
+		SFXManager.startFadeLoop('chant');
+		SFXManager.startFadeLoop('choir');
+
+		SFXManager.startLoop('breathing');
+	}
+
 	// Utility func
 	function randomSeed(seed) {
 		var x = Math.sin(seed) * 10000;
@@ -542,6 +553,9 @@ global.onstart.push(function () {
 		// Get the DOM element to attach to
 		const container =
 			document.getElementById('container');
+
+		// Set up sfx
+		setUpSFX();
 
 		const scene = new THREE.Scene();
 
