@@ -220,7 +220,7 @@ global.onstart.push(function () {
 	}
 
 	global.playSound = function (b64, startTime) {
-		console.log(b64);
+		// console.log(b64);
 
 		if (!global.audio) {
 			let sound = new Audio('');

@@ -6,7 +6,6 @@ global.onstart.push(()=>{
 	});
 
 	socket.on('playSound', (b64, startTime)=>{
-		console.log('sound');
 		global.playSound(b64, startTime);
 	});
 
