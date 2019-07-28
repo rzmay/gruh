@@ -39,15 +39,30 @@ router.post('/audio-upload', function(req, res, next) {
   
 });
 
-/* GET public files from server */
-router.get('/file', function(req, res, next) {
-  // Make sure directory is either audio or models
-  if (req.query.directory !== 'models' && req.query.directory !== 'audio') {
-    res.status(403).send('Only files in the audio and models paths are accessible')
-  }
+/* GET audio files from server */
+router.get('/audio', function(req, res, next) {
+  // Make sure file is in audio
+  fs.readdir('./audio', function(err, items) {
+    if (!items.includes(req.query.name)) {
+      res.status(403).send(`${req.query.name} File is not in permitted directory`)
+    }
 
-  let fileName = '/' + req.query.directory + '/' + req.query.name;
-  res.sendFile(fileName, { root: config.root});
+    let fileName = `/audio/${req.query.name}`;
+    res.sendFile(fileName, { root: config.root});
+  });
+});
+
+/* GET models from server */
+router.get('/model', function(req, res, next) {
+  // Make sure file is in models
+  fs.readdir('./models', function(err, items) {
+    if (!items.includes(req.query.name)) {
+      res.status(403).send(`${req.query.name} File is not in permitted directory`)
+    }
+
+    let fileName = `/models/${req.query.name}`;
+    res.sendFile(fileName, {root: config.root});
+  });
 });
 
 io.on('connect', (socket) => {

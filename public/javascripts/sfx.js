@@ -1,5 +1,4 @@
 class SFXManager {
-	static audioPath = 'audio';
 
 	static defaultFadeLoopOptions = {
 		cello: {
@@ -50,21 +49,21 @@ class SFXManager {
 
 	static startWhiteNoise() {
 		let fileName = 'white_noise';
-		let audioElement = this.addAudio(`/file?name=${fileName}.mp3&directory=${this.audioPath}`, 'whiteNoise');
+		let audioElement = this.addAudio(`/audio?name=${fileName}.mp3`, 'whiteNoise');
 
 		audioElement[0].play();
 		audioElement.animate({volume: 0.5}, 3000);
 	}
 
 	static startFadeLoop(fileName, options) {
-		let audioElement = this.addAudio(`/file?name=${fileName}.mp3&directory=${this.audioPath}`, `${fileName}Audio`);
+		let audioElement = this.addAudio(`/audio?name=${fileName}.mp3`, `${fileName}Audio`);
 
 		audioElement[0].play();
 		this.audioFadeLoop(audioElement, options || this.defaultFadeLoopOptions[fileName]);
 	}
 
 	static startLoop(fileName, options) {
-		let audioElement = this.addAudio(`/file?name=${fileName}.mp3&directory=${this.audioPath}`, `${fileName}Audio`);
+		let audioElement = this.addAudio(`/audio?name=${fileName}.mp3`, `${fileName}Audio`);
 
 		this.audioLoop(audioElement, options || this.defaultLoopOptions[fileName]);
 	}

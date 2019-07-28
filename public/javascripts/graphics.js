@@ -321,7 +321,7 @@ global.onstart.push(function () {
 
 		loader.load(
 			// resource URL
-			'/file?name=gruh_eyes.glb&directory=models',
+			'/model?name=gruh_eyes.glb',
 			// called when the resource is loaded
 			function (gltf) {
 
