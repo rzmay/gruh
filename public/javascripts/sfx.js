@@ -1,4 +1,5 @@
 class SFXManager {
+	static audioPath = 'audio';
 
 	static defaultFadeLoopOptions = {
 		cello: {
@@ -20,7 +21,7 @@ class SFXManager {
 		},
 
 		chant: {
-			maxVolume: 0.05,
+			maxVolume: 0.08,
 			maxDuration: 10,
 			minDuration: 5,
 			maxRest: 60,
@@ -29,7 +30,7 @@ class SFXManager {
 		},
 
 		choir: {
-			maxVolume: 0.03,
+			maxVolume: 0.06,
 			maxDuration: 8,
 			minDuration: 5,
 			maxRest: 60,
@@ -48,21 +49,22 @@ class SFXManager {
 	};
 
 	static startWhiteNoise() {
-		let audioElement = this.addAudio('audio/white_noise.mp3', 'whiteNoise');
+		let fileName = 'white_noise';
+		let audioElement = this.addAudio(`/file?name=${fileName}.mp3&directory=${this.audioPath}`, 'whiteNoise');
 
 		audioElement[0].play();
 		audioElement.animate({volume: 0.5}, 3000);
 	}
 
 	static startFadeLoop(fileName, options) {
-		let audioElement = this.addAudio(`audio/${fileName}.mp3`, `${fileName}Audio`);
+		let audioElement = this.addAudio(`/file?name=${fileName}.mp3&directory=${this.audioPath}`, `${fileName}Audio`);
 
 		audioElement[0].play();
 		this.audioFadeLoop(audioElement, options || this.defaultFadeLoopOptions[fileName]);
 	}
 
 	static startLoop(fileName, options) {
-		let audioElement = this.addAudio(`audio/${fileName}.mp3`, `${fileName}Audio`);
+		let audioElement = this.addAudio(`/file?name=${fileName}.mp3&directory=${this.audioPath}`, `${fileName}Audio`);
 
 		this.audioLoop(audioElement, options || this.defaultLoopOptions[fileName]);
 	}

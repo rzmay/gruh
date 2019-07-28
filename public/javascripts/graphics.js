@@ -321,7 +321,7 @@ global.onstart.push(function () {
 
 		loader.load(
 			// resource URL
-			'gruh_eyes.glb',
+			'/file?name=gruh_eyes.glb&directory=models',
 			// called when the resource is loaded
 			function (gltf) {
 
@@ -641,7 +641,7 @@ global.onstart.push(function () {
 
 			// Camera moves where mouse moves (you fool. I will bash you)
 			camera.position.x += ( (global.mouse.x || 0) - camera.position.x ) * .05;
-			camera.position.y += ( - ((global.mouse.y / 1.5) || 0) - camera.position.y ) * .05;
+			camera.position.y += ( - ((global.mouse.y / 1.9) || 0) - camera.position.y ) * .05;
 
 			camera.lookAt( scene.position );
 

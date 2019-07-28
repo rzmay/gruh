@@ -39,6 +39,17 @@ router.post('/audio-upload', function(req, res, next) {
   
 });
 
+/* GET public files from server */
+router.get('/file', function(req, res, next) {
+  // Make sure directory is either audio or models
+  if (req.query.directory !== 'models' && req.query.directory !== 'audio') {
+    res.status(403).send('Only files in the audio and models paths are accessible')
+  }
+
+  let fileName = '/' + req.query.directory + '/' + req.query.name;
+  res.sendFile(fileName, { root: config.root});
+});
+
 io.on('connect', (socket) => {
   console.log(`${socket.id} has connected`);
   // immediately emit current sound at correct time

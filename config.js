@@ -1,6 +1,7 @@
 const MerchTag = require('./classes/merch_tag');
 
 let config = {
+	'root': __dirname,
 	'permittedFrequencyMultipliers': [
 		1,
 		2,
