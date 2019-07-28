@@ -27,7 +27,7 @@ block content
                 hr.my-4
                 ul.nav.nav-tabs#shopTab(role='tablist')
                     li.nav-item
-                        a.nav-link.active#uploadAudioTab(data-toggle='tab', href='#uploadAudio', role='tab' aria-controls='uploadAudio' aria-selected=true) Upload Audio
+                        a.nav-link.active#uploadAudioTab(data-toggle='tab', href='#uploadAudio', role='tab' aria-controls='uploadAudio' aria-selected) Upload Audio
                     li.nav-item
                         a.nav-link#gruhMerchTab(data-toggle='tab' href='#gruhMerch' role='tab' aria-controls='gruhMerch' aria-selected=false) Gruh Merch
                     li.nav-item
@@ -44,7 +44,7 @@ block content
                                 form.needs-validation#uploadForm(enctype='multipart/form-data')
                                     div.form-row
                                         div.custom-file#fileInputContainer
-                                            input.custom-file-input#audioInput(type='file', accept='.mp3,audio/mpeg3', required=true, name='audioFile')
+                                            input.custom-file-input#audioInput(type='file', accept='.mp3,audio/mpeg3', required, name='audioFile')
                                             label.custom-file-label#audioInputLabel(for='audioInput') Choose file...
                                             div.invalid-tooltip#invalidFileTooltip Please choose a valid mp3 file.
                                     div.form-row
@@ -58,9 +58,9 @@ block content
                                             div.input-group
                                                 div.input-group-prepend
                                                     span.input-group-text $
-                                                input.form-control#uploadPrice(type='text', placeholder='0.00', readonly=true)
+                                                input.form-control#uploadPrice(type='text', placeholder='0.00', readonly)
                                         div.col-6.form-group
-                                            button.btn.btn-success.btn-block#submitButton(type='submit' disabled=true) Submit (Not Yet Available)
+                                            button.btn.btn-success.btn-block#submitButton(type='submit') Submit
 
                     div.tab-pane.fade#gruhMerch(role='tabpanel', aria-labelledby='gruhMerchTab')
                         h3.display-4.mb-2 Gruh Merchandise
@@ -96,6 +96,9 @@ block content
     script(src='javascripts/graphics.js')
     script(src='javascripts/menu.js')
     script(src='javascripts/sfx.js')
+
+    // Stripe
+    script(src='https://js.stripe.com/v3/')
 
     if main
         script(src='/socket.io/socket.io.js')

@@ -53,10 +53,7 @@ let frequencyMultiplier = $('#frequencyMultiplier');
 let priceLabel = $('#uploadPrice');
 let invalidTooltip = $('#invalidFileTooltip');
 
-// Stop reload
-form.on('submit', (e)=>{  });
-
-function uploadFile() {
+function uploadFile(url, success) {
 	let reader = new FileReader();
 	let file = fileInput[0].files[0];
 
@@ -64,7 +61,7 @@ function uploadFile() {
 	reader.onload = function () {
 		let b64 = reader.result;
 		$.ajax({
-			url: 'audio.check',
+			url: url,
 			type: 'POST',
 			dataType: 'json',
 			data: {
@@ -78,6 +75,11 @@ function uploadFile() {
 				priceLabel.attr('placeholder', data.price);
 				fileInput.removeClass('is-invalid');
 				fileInput.addClass('is-valid');
+
+				// Callback
+				if (success) {
+					success(data);
+				}
 			},
 			error: (error) => {
 				// Reset inputs
@@ -113,11 +115,35 @@ fileInput.on('change', () => {
 	let fileName = fileInput[0].files[0].name;
 	fileLabel.text(fileName);
 
-	uploadFile();
+	uploadFile('audio.check');
 });
 
 frequencyMultiplier.on('change', () => {
-	uploadFile();
+	uploadFile('audio.check');
 });
 
+/* Upload file & pay */
+
+form.on('submit', (e)=>{
+	// Stop reload
+	e.preventDefault();
+
+
+	// Stripe
+	var stripe = Stripe(config.stripePublicKey);
+	uploadFile('audio.upload', (session)=>{
+		console.log(session);
+		stripe.redirectToCheckout({
+			// Make the id field from the Checkout Session creation API response
+			// available to this file, so you can provide it as parameter here
+			// instead of the {{CHECKOUT_SESSION_ID}} placeholder.
+			sessionId: session
+		}).then(function (result) {
+			// If `redirectToCheckout` fails due to a browser or network
+			// error, display the localized error message to your customer
+			// using `result.error.message`.
+			console.log(result);
+		});
+	})
+});
 

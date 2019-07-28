@@ -90,6 +90,8 @@ class AudioUploadHelper {
 			};
 
 			if (success) {
+				response.size = size;
+				response.duration = duration;
 				response.price = this.calculateCost(duration, req.body.frequencyMultiplier, size);
 				completion(response);
 			} else {

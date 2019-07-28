@@ -1,6 +1,7 @@
 const fs = require('fs');
-
 const MerchTag = require('./classes/merch_tag');
+
+require('dotenv').config();
 
 /* Base JSON, anything that requires no javascript */
 let config = {
@@ -76,6 +77,8 @@ let config = {
 
 	shortDescription: 'Gruh is a platform on which you can exercise your right of' +
 		' free speech by uploading any audio file for Gruh to say with complete anonymity.',
+
+	stripePublicKey: process.env.STRIPE_PK_TEST
 };
 
 module.exports = config;

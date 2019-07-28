@@ -8,6 +8,8 @@ const config = require('./config');
 
 var indexRouter = require('./routes/index');
 
+require('dotenv').config();
+
 var app = express();
 
 // socket.io

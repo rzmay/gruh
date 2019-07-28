@@ -3,6 +3,12 @@ const fs = require('fs');
 var express = require('express');
 var socket = require('socket.io');
 
+require('dotenv').config();
+
+const keyPublishable = process.env.PUBLISHABLE_KEY;
+const keySecret = process.env.SECRET_KEY;
+const stripe = require('stripe')(process.env.STRIPE_SK_TEST);
+
 const config = require('../config');
 var AudioManager = require('../classes/audio_manager');
 var audioUploadHelper = require('../classes/audio_upload_helper');
@@ -34,9 +40,32 @@ router.post('/audio.check', function(req, res, next) {
   })
 });
 
-/* POST audio file for upload to database; also return analytics tracker */
-router.post('/audio-upload', function(req, res, next) {
-  
+/* POST audio file for upload to database */
+router.post('/audio.upload', function(req, res, next) {
+  // Get upload data
+  audioUploadHelper.processUploadCheckReq(req, (response)=>{
+    if (response.success) {
+      // Create session
+      stripe.checkout.sessions.create({
+        payment_method_types: ['card'],
+        line_items: [{
+          name: 'Upload Audio to Gruh',
+          description: `Upload ${response.duration/1000} seconds of audio (${response.size} MB) to the Gruh Zone database`,
+          images: ['https://www.gruhzone.com/gruh.png'],
+          amount: response.price * 100,
+          currency: 'usd',
+          quantity: 1,
+        }],
+        success_url: 'https://www.gruhzone.com/?upload=true&tracker=unavailable',
+        cancel_url: 'https://www.gruhzone.com',
+      })
+        .then((session)=>{
+          res.send(session)
+        });
+    } else {
+      res.status(400).send(response)
+    }
+  });
 });
 
 /* GET audio files from server */
@@ -76,6 +105,11 @@ router.get('/video', function(req, res, next) {
     let fileName = `/videos/${req.query.name}`;
     res.sendFile(fileName, {root: config.root});
   });
+});
+
+/* GET gruh image */
+router.get('/gruh.png', function(req, res, next) {
+  res.sendFile('/images/gruh.png', {root: config.root});
 });
 
 io.on('connect', (socket) => {
