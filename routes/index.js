@@ -65,6 +65,19 @@ router.get('/model', function(req, res, next) {
   });
 });
 
+/* GET videos from server */
+router.get('/video', function(req, res, next) {
+  // Make sure file is in models
+  fs.readdir('./videos', function(err, items) {
+    if (!items.includes(req.query.name)) {
+      res.status(403).send(`${req.query.name} File is not in permitted directory`)
+    }
+
+    let fileName = `/videos/${req.query.name}`;
+    res.sendFile(fileName, {root: config.root});
+  });
+});
+
 io.on('connect', (socket) => {
   console.log(`${socket.id} has connected`);
   // immediately emit current sound at correct time

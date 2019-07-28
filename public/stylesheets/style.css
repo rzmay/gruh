@@ -1,3 +1,4 @@
+/* Universal */
 body {
   padding: 50px;
 
@@ -10,6 +11,7 @@ a {
   color: #00B7FF;
 }
 
+/* Home */
 #start {
   width: 60%;
 }
@@ -38,6 +40,7 @@ a {
   text-align: center;
 }
 
+/* Menu */
 #menuContainer {
   position: absolute;
   top: 0;
@@ -82,4 +85,21 @@ a {
 
 .shadow {
   box-shadow: 5px 5px 50px 5px #c0d6cb;
+}
+
+/* Error */
+#cryer {
+  position: fixed;
+
+  right: 0;
+  bottom: 0;
+
+  min-width: 100%;
+  min-height: 100%;
+
+  z-index: -999
+}
+
+.bg-alpha {
+  background: rgba(255,255,255,0.4);
 }

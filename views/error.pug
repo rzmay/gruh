@@ -1,6 +1,16 @@
 extends layout
 
 block content
-    h1= message
-    h2= error.status
-    pre #{error.stack}
+    video#cryer(autoplay, muted, loop)
+        source(src='/video?name=gruh_crying.mp4', type='video/mp4')
+
+    div.row.mb-5
+        h1.display-4.text-light You are in the wrong zone.
+    div.row.mb-2
+        h3.mb-3.text-light Here's what went wrong with your request:
+    div.row.mb-4.border.rounded.border-danger
+        div.col-6
+            h2.text-light= error.status
+        div.col-6.border-left.border-danger
+            pre.text-light= message
+    button.btn-block.btn-success(onclick='window.location.href=\'/\'') Return to the Gruh Zone
