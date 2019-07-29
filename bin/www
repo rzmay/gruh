@@ -8,14 +8,6 @@ var app = require('../app');
 var debug = require('debug')('gruh:server');
 var fs = require('fs');
 var http = require('http');
-var https = require('https');
-
-var key = fs.readFileSync(__dirname + '/../certs/selfsigned.key');
-var cert = fs.readFileSync(__dirname + '/../certs/selfsigned.crt');
-var options = {
-  key: key,
-  cert: cert
-};
 
 /**
  * Get port from environment and store in Express.
