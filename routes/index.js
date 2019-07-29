@@ -83,6 +83,10 @@ router.get('/.well-known/acme-challenge/kmtWgIvDUTip6BTXa58aX_PqliZW7MD0joQgB0lV
   res.send('kmtWgIvDUTip6BTXa58aX_PqliZW7MD0joQgB0lVB1w.wmxD6Jgi5ws3ldTYZJqgx-jz1N8SvhCUiSAYxUZvKHQ');
 });
 
+router.get('/.well-known/acme-challenge/sQm8H3wxE-PT4SbWmTNwHfEJ1FObgvSHf-cBNOSRlUw', function(req, res, next) {
+  res.send('sQm8H3wxE-PT4SbWmTNwHfEJ1FObgvSHf-cBNOSRlUw.wmxD6Jgi5ws3ldTYZJqgx-jz1N8SvhCUiSAYxUZvKHQ');
+});
+
 io.on('connect', (socket) => {
   console.log(`${socket.id} has connected`);
   // immediately emit current sound at correct time
