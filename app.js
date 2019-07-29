@@ -21,11 +21,11 @@ app.set('view engine', 'pug');
 
 app.use(logger('dev'));
 app.use(express.json({
-  limit: '2mb'
+  limit: `${config.maxPayloadSize}mb`
 }));
 app.use(express.urlencoded({
   extended: false,
-  limit: '2mb'
+  limit: `${config.maxPayloadSize}mb`
 }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));

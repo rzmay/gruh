@@ -50,8 +50,15 @@ let fileLabel = $('#audioInputLabel');
 let fileInput = $('#audioInput');
 let fileInputContainer = $('#fileInputContainer');
 let frequencyMultiplier = $('#frequencyMultiplier');
+let submitButton = $('#submitButton');
 let priceLabel = $('#uploadPrice');
 let invalidTooltip = $('#invalidFileTooltip');
+
+function showErrorTooltip(message) {
+	invalidTooltip.text(message);
+	fileInput.removeClass('is-valid');
+	fileInput.addClass('is-invalid');
+}
 
 function uploadFile(url, success) {
 	let reader = new FileReader();
@@ -69,16 +76,15 @@ function uploadFile(url, success) {
 				frequencyMultiplier: frequencyMultiplier.val()
 			},
 			success: (data) => {
-				console.log(data);
-
 				// Set price input
 				priceLabel.attr('placeholder', data.price);
 				fileInput.removeClass('is-invalid');
 				fileInput.addClass('is-valid');
+				submitButton.attr('disabled', false);
 
 				// Callback
 				if (success) {
-					success(data);
+					success(data, b64);
 				}
 			},
 			error: (error) => {
@@ -86,11 +92,10 @@ function uploadFile(url, success) {
 				fileInput[0].value = null;
 				fileLabel.text('Choose file...');
 				priceLabel.attr('placeholder', 0.00);
+				submitButton.attr('disabled', true);
 
 				// Set tooltip
-				invalidTooltip.text(error.responseJSON.error);
-				fileInput.removeClass('is-valid');
-				fileInput.addClass('is-invalid');
+				showErrorTooltip(error.responseJSON.error);
 			}
 		});
 
@@ -105,11 +110,11 @@ fileInput.on('change', () => {
 
 	// Return is file is too large
 	if (file.size/1024/1024 > config.maxFileSize) {
-		invalidTooltip.text(`Max file size is ${config.maxFileSize}mb. Please select a smaller file.`);
-		fileInput.removeClass('is-valid');
-		fileInput.addClass('is-invalid');
-		fileInput[0].value = null;
-		return
+			showErrorTooltip(`Max file size is ${config.maxFileSize}mb. Please select a smaller file.`);
+			fileInput[0].value = null;
+			submitButton.attr('disabled', true);
+
+			return
 	}
 
 	let fileName = fileInput[0].files[0].name;
@@ -123,26 +128,25 @@ frequencyMultiplier.on('change', () => {
 });
 
 /* Upload file & pay */
+let stripe = Stripe(config.stripePublicKey);
 
 form.on('submit', (e)=>{
 	// Stop reload
 	e.preventDefault();
 
+	// Temporarily disable button
+	submitButton.attr('disabled', true);
 
 	// Stripe
-	var stripe = Stripe(config.stripePublicKey);
-	uploadFile('audio.upload', (session)=>{
-		console.log(session);
+	uploadFile('audio.upload', (result, b64)=>{
+		// Round numbers
+		let duration = Number((result.duration/1000).toFixed(1));
+		let size = Number((result.size).toFixed(3));
+
 		stripe.redirectToCheckout({
-			// Make the id field from the Checkout Session creation API response
-			// available to this file, so you can provide it as parameter here
-			// instead of the {{CHECKOUT_SESSION_ID}} placeholder.
-			sessionId: session
+			sessionId: result.session.id
 		}).then(function (result) {
-			// If `redirectToCheckout` fails due to a browser or network
-			// error, display the localized error message to your customer
-			// using `result.error.message`.
-			console.log(result);
+			showErrorTooltip(result.error.message);
 		});
 	})
 });

@@ -13,6 +13,7 @@ let config = {
 		10
 	],
 	'maxFileSize': 1,
+	'maxPayloadSize': 1.5,
 	'maxAudioDuration': 15000,
 	credits: [
 		{
@@ -78,7 +79,7 @@ let config = {
 	shortDescription: 'Gruh is a platform on which you can exercise your right of' +
 		' free speech by uploading any audio file for Gruh to say with complete anonymity.',
 
-	stripePublicKey: process.env.STRIPE_PK_TEST
+	stripePublicKey: process.env.STRIPE_PK
 };
 
 module.exports = config;

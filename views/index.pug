@@ -60,7 +60,7 @@ block content
                                                     span.input-group-text $
                                                 input.form-control#uploadPrice(type='text', placeholder='0.00', readonly)
                                         div.col-6.form-group
-                                            button.btn.btn-success.btn-block#submitButton(type='submit') Submit
+                                            button.btn.btn-success.btn-block#submitButton(type='submit', disabled) Submit
 
                     div.tab-pane.fade#gruhMerch(role='tabpanel', aria-labelledby='gruhMerchTab')
                         h3.display-4.mb-2 Gruh Merchandise
@@ -87,18 +87,21 @@ block content
 
         button.btn.btn-dark#menuTrigger(type='button', data-toggle='collapse', data-target='#menu', aria-expanded=false, aria-controls='menu') Show Menu
 
+    // Stripe
+    script(src='https://js.stripe.com/v3/')
+
+    // Three
     script(src='lib/zlib.min.js')
     script(src='lib/three.min.js')
     script(src='lib/GLTFLoader.js')
     script(src='lib/OrbitControls.js')
+
+    // Custom graphics
     script(src='javascripts/particle.js')
     script(src='javascripts/particle_system.js')
     script(src='javascripts/graphics.js')
     script(src='javascripts/menu.js')
     script(src='javascripts/sfx.js')
-
-    // Stripe
-    script(src='https://js.stripe.com/v3/')
 
     if main
         script(src='/socket.io/socket.io.js')

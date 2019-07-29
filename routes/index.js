@@ -5,9 +5,7 @@ var socket = require('socket.io');
 
 require('dotenv').config();
 
-const keyPublishable = process.env.PUBLISHABLE_KEY;
-const keySecret = process.env.SECRET_KEY;
-const stripe = require('stripe')(process.env.STRIPE_SK_TEST);
+const stripe = require('stripe')(process.env.STRIPE_SK);
 
 const config = require('../config');
 var AudioManager = require('../classes/audio_manager');
@@ -45,23 +43,27 @@ router.post('/audio.upload', function(req, res, next) {
   // Get upload data
   audioUploadHelper.processUploadCheckReq(req, (response)=>{
     if (response.success) {
+      // Round numbers
+      let duration = Number((response.duration/1000).toFixed(1));
+      let size = Number((response.size).toFixed(3));
+
       // Create session
       stripe.checkout.sessions.create({
         payment_method_types: ['card'],
         line_items: [{
-          name: 'Upload Audio to Gruh',
-          description: `Upload ${response.duration/1000} seconds of audio (${response.size} MB) to the Gruh Zone database`,
+          name: 'Gruh Zone Upload',
+          description: `Upload audio file to Gruh\'s database (${duration} sec, ${size} MB)`,
           images: ['https://www.gruhzone.com/gruh.png'],
           amount: response.price * 100,
           currency: 'usd',
           quantity: 1,
         }],
-        success_url: 'https://www.gruhzone.com/?upload=true&tracker=unavailable',
+        success_url: 'https://www.gruhzone.com',
         cancel_url: 'https://www.gruhzone.com',
-      })
-        .then((session)=>{
-          res.send(session)
-        });
+      }).then((session)=>{
+        response.session = session;
+        res.send(response);
+      });
     } else {
       res.status(400).send(response)
     }

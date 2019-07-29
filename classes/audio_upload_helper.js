@@ -8,6 +8,7 @@ tmp.setGracefulCleanup();
 
 class AudioUploadHelper {
 
+	/* FILE READING */
 	static getFileInfoFromBase64(b64, completion) {
 		tmp.file({ mode: 0o644, prefix: 'audio-upload-' }, function _tempFileCreated(err, path, fd, cleanupCallback) {
 			if (err) throw err;
@@ -22,28 +23,23 @@ class AudioUploadHelper {
 			});
 
 			// Get file size
-			fs.stat(path, (err, stats)=>{
-				if (err) {
-					console.log(err);
-					return;
-				}
+			let byteSize = (b64.length * (3/4)) - ((b64[b64.length-2] === '=') ? 2 : 1);
+			let size = byteSize / 1000 / 1000;
 
-				let size = stats.size / 1000 / 1000;
-
-				// Get duration
-				getAudioDurationInSeconds(path)
-					.then((duration)=>{
-						completion(duration * 1000, size);
-						cleanupCallback();
-					})
-					.catch((e)=>{
-						console.log(e);
-						cleanupCallback();
-					})
-			});
+			// Get duration
+			getAudioDurationInSeconds(path)
+				.then((duration) => {
+					completion(duration * 1000, size);
+					cleanupCallback();
+				})
+				.catch((e) => {
+					console.log(e);
+					cleanupCallback();
+				})
 		});
 	}
 
+	/* REQUEST PROCESSING */
 	static processUploadCheckReq(req, completion) {
 		req.body.frequencyMultiplier = parseFloat(req.body.frequencyMultiplier);
 
@@ -116,8 +112,11 @@ class AudioUploadHelper {
 		let differenceScale = 0.05;
 		let finalCost = scaledCost - (differenceScale * (frequencyMultiplier - 1));
 
+		// Cost must be at least 50 cents for stripe
+		let validCost = Math.max(0.50, finalCost);
+
 		// Round and return cost
-		return  Number((finalCost).toFixed(2));
+		return  Number((validCost).toFixed(2));
 	}
 
 	static missingParamError(params) {
@@ -147,6 +146,8 @@ class AudioUploadHelper {
 	static fileSizeError(fileSize) {
 		return `File size ${fileSize} MB is too large (Maximum size: ${config.maxFileSize} MB)`
 	}
+
+	/* STRIPE CHECKOUT HANDLING */
 }
 
 module.exports = AudioUploadHelper;
