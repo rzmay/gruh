@@ -78,6 +78,11 @@ router.get('/video', function(req, res, next) {
   });
 });
 
+/* GET certification code */
+router.get('/.well-known/acme-challenge/kmtWgIvDUTip6BTXa58aX_PqliZW7MD0joQgB0lVB1w', function(req, res, next) {
+  res.send('kmtWgIvDUTip6BTXa58aX_PqliZW7MD0joQgB0lVB1w.wmxD6Jgi5ws3ldTYZJqgx-jz1N8SvhCUiSAYxUZvKHQ');
+});
+
 io.on('connect', (socket) => {
   console.log(`${socket.id} has connected`);
   // immediately emit current sound at correct time
