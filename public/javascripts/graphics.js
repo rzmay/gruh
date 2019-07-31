@@ -580,8 +580,7 @@ global.onstart.push(function () {
 		global.millis = new Date().getTime();
 
 		global.mouseDown = false;
-		global.headx = 0;
-		global.heady = 0;
+		global.curRotation = new THREE.Quaternion(0, 0, 0, 0);
 
 		getMesh(scene,(mesh) => {
 			gruh = mesh.getObjectByName('Head');
@@ -639,9 +638,22 @@ global.onstart.push(function () {
 
 			// orbit(camera, scene.position, new THREE.Vector3(0, 1, 0), global.mouse.x / window.innerWidth);
 
-			// Camera moves where mouse moves (you fool. I will bash you)
-			camera.position.x += ( (global.mouse.x || 0) - camera.position.x ) * .05;
-			camera.position.y += ( - ((global.mouse.y / 1.9) || 0) - camera.position.y ) * .05;
+			// Camera moves where mouse moves (i dont like how it gets further away at the corners)
+			// camera.position.x += ( (global.mouse.x || 0) - camera.position.x ) * .05;
+			// camera.position.y += ( - ((global.mouse.y / 1.9) || 0) - camera.position.y ) * .05;
+
+			// ROBERT if you have a faster way of doing this can you tell me I need to learn
+
+			let targetRot = new THREE.Quaternion();
+			targetRot.setFromEuler( new THREE.Euler( 0, global.mouse.x / 2000 - Math.PI/2, -global.mouse.y / 2000) );
+			global.curRotation.slerp( targetRot, Math.min(1, global.dt * .01) );
+
+
+			let vec = new THREE.Vector3(1750, 0, 0);
+			vec.applyQuaternion(global.curRotation);
+			console.log(vec);
+			
+			camera.position.copy( vec );
 
 			camera.lookAt( scene.position );
 
