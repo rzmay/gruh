@@ -651,7 +651,7 @@ global.onstart.push(function () {
 
 			let vec = new THREE.Vector3(1700, 0, 0);
 			vec.applyQuaternion(global.curRotation);
-			console.log(vec);
+			// console.log(vec);
 			
 			camera.position.copy( vec );
 
