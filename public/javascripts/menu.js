@@ -3,9 +3,11 @@ global.onstart.push(() => {
 	let menuTrigger = $('#menuTrigger');
 	let triggerY = 75;
 	let lastMousePos;
+	let menuOpen = false;
 
 	menuTrigger.click(() => {
 		menuTrigger.text(function (i, old) {
+			menuOpen = !menuOpen;
 			return old == 'Show Menu' ? 'Hide Menu' : 'Show Menu';
 		});
 	});
@@ -13,7 +15,7 @@ global.onstart.push(() => {
 	window.onmousemove = (e) => {
 		if (e.clientY < triggerY && lastMousePos >= triggerY) {
 			menuTrigger.animate({top: '20px'}, 250);
-		} else if (e.clientY >= triggerY && lastMousePos < triggerY) {
+		} else if (e.clientY >= triggerY && lastMousePos < triggerY && !menuOpen) {
 			menuTrigger.animate({top: '-50px'}, 100);
 		}
 		lastMousePos = e.clientY;
@@ -101,7 +103,7 @@ function uploadFile() {
 fileInput.on('change', () => {
 	let file = fileInput[0].files[0];
 
-	// Return is file is too large
+	// Return if file is too large
 	if (file.size/1024/1024 > config.maxFileSize) {
 		invalidTooltip.text(`Max file size is ${config.maxFileSize}mb. Please select a smaller file.`);
 		fileInput.removeClass('is-valid');
