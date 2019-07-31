@@ -287,7 +287,7 @@ global.onstart.push(function () {
 		// 		FAR
 		// 	);
 
-		camera.position.set(0, 100, 1750);
+		camera.position.set(0, 100, 1700);
 		scene.add(camera);
 
 		// var controls = new THREE.OrbitControls(camera);
@@ -649,7 +649,7 @@ global.onstart.push(function () {
 			global.curRotation.slerp( targetRot, Math.min(1, global.dt * .01) );
 
 
-			let vec = new THREE.Vector3(1750, 0, 0);
+			let vec = new THREE.Vector3(1700, 0, 0);
 			vec.applyQuaternion(global.curRotation);
 			console.log(vec);
 			
