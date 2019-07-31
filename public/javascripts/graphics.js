@@ -710,7 +710,8 @@ global.start = function () {
 	}
 };
 
-document.getElementById('start').onclick = () => {
+// document.getElementById('start').onclick = () => {
+window.onload = function() {
 	if (!global.hasStarted) {
 		global.hasStarted = true;
 
