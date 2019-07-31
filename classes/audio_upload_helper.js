@@ -1,8 +1,10 @@
 var fs = require('fs');
 var tmp = require('tmp');
+var crypto = require('crypto');
 const { getAudioDurationInSeconds } = require('get-audio-duration');
 
 const config = require('../config');
+const UploadClient = require('./upload_client');
 
 tmp.setGracefulCleanup();
 
@@ -148,6 +150,92 @@ class AudioUploadHelper {
 	}
 
 	/* STRIPE CHECKOUT HANDLING */
+
+	static clients = [];
+
+	static registerClient(b64, frequencyMultiplier, session) {
+		// Generate client id
+		let ids = this.clients.map(client => client.id);
+		let id = crypto.randomBytes(20).toString('hex');
+		while (ids.includes(id)) {
+			id = crypto.randomBytes(20).toString('hex');
+		}
+
+		// Create and push client
+		let client = new UploadClient(id, b64, frequencyMultiplier, session);
+		this.clients.push(client);
+
+		return client;
+	}
+
+	static getClientBySessionId(id) {
+		let ids = this.clients.map(client => client.session.id);
+
+		let index = ids.indexOf(id);
+		if (index < 0) return null;
+
+		return this.clients[ids.indexOf(id)];
+	}
+
+	static getClientById(id) {
+		let ids = this.clients.map(client => client.id);
+
+		let index = ids.indexOf(id);
+		if (index < 0) return null;
+
+		return this.clients[ids.indexOf(id)];
+	}
+
+	/* HANDLE CHECKOUT COMPLETION */
+
+	static onSessionCompleted(session) {
+		// Get client object
+		let client = this.getClientBySessionId(session.id);
+
+		// Update client object to show reflect completion
+		client.onPurchaseCompleted();
+
+		// Server will send a message to the next client to send a req to the server with the client id in their cookies
+	}
+
+	// This will be called in an interval in index.js
+	static checkCompletedSessions(stripe) {
+		let self = this;
+		const events = stripe.events.list({
+			type: 'checkout.session.completed',
+			created: {
+				// Check for events created in the last 24 hours.
+				gte: Date.now() - 24 * 60 * 60,
+			},
+		}, function (err, eventList) {
+			let events = eventList.data;
+
+			// Return if there are no events
+			if (!events) {
+				return
+			}
+
+			console.log(events);
+
+			for (const event of events) {
+				const session = event.data.object;
+
+				// Fulfill the purchase
+				self.onSessionCompleted(session);
+			}
+		})
+	}
+
+	// Called by server in index.js when a client receives the message that their purchase was completed
+	static destroyClient(id) {
+		let client = this.getClientById(id);
+
+		let index = this.clients.indexOf(client);
+		if (index < 0) return false;
+
+		this.clients.splice(index, 1);
+		return true;
+	}
 }
 
 module.exports = AudioUploadHelper;
