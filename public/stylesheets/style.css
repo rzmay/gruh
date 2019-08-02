@@ -13,7 +13,11 @@ a {
 
 /* Home */
 #start {
-  width: 60%;
+  position: relative;
+  width: 300px;
+  top: 50%;
+  transform: translate(0, -50%);
+  font-size: 50px;
 }
 
 #container {
