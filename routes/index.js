@@ -7,6 +7,7 @@ var socket = require('socket.io');
 require('dotenv').config();
 
 const stripe = require('stripe')(process.env.STRIPE_SK);
+const endpointSecret = process.env.STRIPE_ENDPOINT_SECRET;
 
 const config = require('../config');
 var UploadClient = require('../classes/upload_client');
@@ -191,7 +192,15 @@ router.get('/gruh.png', function(req, res, next) {
 
 /* POST Stripe payment webhook */
 router.post('/stripe_webhook', function(req, res, next) {
-  let event = req.body;
+  const sig = request.headers['stripe-signature'];
+
+  let event;
+  try {
+    event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
+  } catch (err) {
+    console.log(`WEBHOOK ERROR: ${err.message}`);
+    res.status(400).send(`Webhook Error: ${err.message}`);
+  }
 
   // Handle the event
   switch (event.type) {
