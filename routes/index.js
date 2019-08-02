@@ -1,5 +1,6 @@
 const path = require('path');
 const fs = require('fs');
+const admin = require('firebase-admin');
 var express = require('express');
 var socket = require('socket.io');
 
@@ -17,14 +18,28 @@ var audioManager = new AudioManager();
 var io = socket();
 var soundPath = '../audio/sound.mp3';
 
+// Initialize firebase app
+const serviceAccount = config.private.root + '/gruh-firebase-admin-privkey.json';
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount),
+  databaseURL: 'https://gruh-a1cf9.firebaseio.com',
+  storageBucket: 'gruh-a1cf9.appspot.com'
+});
+
+// Share admin with helper classes
+audioUploadHelper.setAdmin(admin);
+AudioManager.setAdmin(admin);
+UploadClient.setAdmin(admin);
+
+
 /* GET home page. */
 router.get('/', function(req, res, next) {
   let renderData = { title: 'Gruh', main: true, info: config.getPublic()};
 
   // Check for client id (recently made purchase)
-  console.log(req.cookies);
   if (req.cookies.clientId) {
     let id = req.cookies.clientId;
+    console.log(`Client returning: ${id}`);
 
     // If purchase was unsuccessful, destroy client
     // Otherwise, load the page with a message and the aId of the client
@@ -32,11 +47,10 @@ router.get('/', function(req, res, next) {
       audioUploadHelper.destroyClient(req.cookies.clientId);
 
       // Reset cookie
-      res.cookie('clientId', null);
+      res.clearCookie('clientId');
     } else {
       // Get client
       let client = audioUploadHelper.getClientById(id);
-      console.log(client);
 
       // If the client exists set render data
       // Otherwise, clear cookies
@@ -46,11 +60,11 @@ router.get('/', function(req, res, next) {
         if (client.wasCompleted) {
           // Set data to show client
           renderData.info.isClient = true;
-          renderData.info.analyticsId = client.aId;
+          renderData.info.analyticsIdentifier = client.aId;
           renderData.info.clientId = client.id;
         }
       } else {
-        res.cookie('clientId', null);
+        res.clearCookie('clientId');
       }
     }
   }
@@ -95,7 +109,7 @@ router.post('/audio.upload', function(req, res, next) {
           name: 'Gruh Zone Upload',
           description: `Upload audio file to Gruh\'s database (${duration} sec, ${size} MB)`,
           images: ['https://www.gruhzone.com/gruh.png'],
-          amount: response.price * 100,
+          amount: Math.floor(response.price * 100),
           currency: 'usd',
           quantity: 1,
         }],
@@ -116,20 +130,17 @@ router.post('/audio.upload', function(req, res, next) {
   });
 });
 
-/* POST clear client after message delivered */
-router.post('/clearclient', function(req, res, next) {
-  if (req.body.client_id) {
-    // Destroy client
-    let success = audioUploadHelper.destroyClient(req.body.client_id);
 
-    // Reset cookie
-    res.cookie('clientId', null);
+/* POST request current audio from server */
+router.post('/current_audio', function(req, res, next) {
+  // res.sendFile('/audio/current_audio.mp3', { root: config.private.root });
 
-    res.send({success: success});
-  } else {
-    res.status(400).send({success: false, error: 'Missing client id'});
-  }
+  // Send file as data url (base 64)
+  res.send({
+    b64: fs.readFileSync(config.private.root + '/audio/current_audio.mp3', { encoding: 'base64' })
+  });
 });
+
 
 /* GET audio files from server */
 router.get('/audio', function(req, res, next) {
@@ -177,6 +188,7 @@ router.get('/gruh.png', function(req, res, next) {
 
 /* STRIPE SESSION COMPLETION */
 
+
 /* POST Stripe payment webhook */
 router.post('/stripe_webhook', function(req, res, next) {
   let event = req.body;
@@ -196,25 +208,104 @@ router.post('/stripe_webhook', function(req, res, next) {
 });
 
 
-/* Socket.io Setup */
+/* POST clear client after message delivered */
+router.post('/clearclient', function(req, res, next) {
+  if (req.body.clientId) {
+    // Destroy client
+    let success = audioUploadHelper.destroyClient(req.body.clientId);
+
+    // Reset cookie
+    res.clearCookie('clientId');
+
+    res.send({success: success});
+  } else {
+    res.status(400).send({success: false, error: 'Missing client id'});
+  }
+});
+
+
+/* API (Offsite requests) */
+
+// POST retrieve analytics
+router.post('/api/analytics', function(req, res, next) {
+  if (req.body.analytics_id) {
+    let id = req.body.analytics_id;
+    AudioManager.getAnalytics(id,
+      (data) => {
+        res.send(data)
+      },
+      () => {
+        res.status(400).send({message: 'Invalid analytics identifier'});
+      }
+    );
+  } else {
+    res.status(400).send({message: 'Missing analytics identifier'});
+  }
+});
+
+// GET retrieve analytics
+router.get('/api/analytics', function(req, res, next) {
+  if (req.query.analytics_id) {
+    let id = req.query.analytics_id;
+    AudioManager.getAnalytics(id,
+      (data) => {
+        res.send(data)
+      },
+      () => {
+        res.status(400).send({message: 'Invalid analytics identifier'});
+      }
+    );
+  } else {
+    res.status(400).send({message: 'Missing analytics identifier'});
+  }
+});
+
+
+/* SOCKET.IO SETUP */
+
+// Track number of clients
+var clientCount = 0;
 
 // Socket connection
 io.on('connect', (socket) => {
   console.log(`${socket.id} has connected`);
+  clientCount++;
   // immediately emit current sound at correct time
   audioManager.sendSoundSocket(socket);
+
+  socket.on('disconnect', ()=>{
+    clientCount--;
+  });
 });
 
 // Set up sound intervals
-function sendSound() {
-  // Override
-  soundPath = '/../audio/jude_laughing.mp3';
+function sendSoundFile() {
+  // File
+  soundPath = '/../audio/default.mp3';
 
-  audioManager.startPlaying(soundPath, io);
+  audioManager.setAudioFromFile(soundPath);
+  audioManager.startPlaying(io);
   audioManager.on('end', ()=>{
+    io.emit('stopSound');
     setTimeout(()=>{
-      sendSound()
-    }, 7000);
+      sendSoundFile()
+    }, (Math.random() * 5 + 5) * 1000);
+  });
+}
+
+function sendSoundFirebase() {
+  audioManager.setAudioFromStorage((aId)=>{
+    audioManager.startPlaying(io);
+    audioManager.on('end', ()=>{
+      io.emit('stopSound');
+      setTimeout(()=>{
+        sendSoundFirebase();
+      }, (Math.random() * 5 + 5) * 1000);
+    });
+
+    // Increment analytics
+    AudioManager.updateTimesPlayed(aId, 1);
+    AudioManager.updateTimesHeard(aId, clientCount);
   });
 }
 
@@ -237,7 +328,7 @@ function doBlink() {
 
 // Begin intervals
 doBlink();
-sendSound();
+sendSoundFirebase();
 
 router.io = io;
 

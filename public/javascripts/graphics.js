@@ -219,7 +219,7 @@ global.onstart.push(function () {
 		}
 	}
 
-	global.playSound = function (b64, startTime) {
+	global.playSound = function (src, b64, startTime) {
 		// console.log(b64);
 
 		if (!global.audio) {
@@ -227,6 +227,7 @@ global.onstart.push(function () {
 			sound.id = 'audio';
 			sound.controls = false;
 			sound.type = 'audio/mp3';
+			sound.crossOrigin = 'anonymous';
 
 			document.body.appendChild(sound);
 			global.audio = document.getElementById('audio');
@@ -239,12 +240,33 @@ global.onstart.push(function () {
 		}
 
 		global.audio.currentTime = startTime / 1000;
-		global.audio.src = 'data:audio/wav;base64,' + b64;
 
-		global.audio.play()
-			.catch((e) => {
-				console.log(e)
-			});
+		if (!b64) {
+			$.ajax({
+				url: '/current_audio',
+				type: 'POST',
+				dataType: 'json',
+				success: (data)=>{
+					global.audio.src = 'data:audio/mp3;base64,' + data.b64;
+
+					global.audio.play()
+						.catch((e) => {
+							console.log(e.toString())
+						});
+				},
+				error: (error)=>{
+					console.log(error);
+				}
+			})
+		} else {
+			global.audio.src = 'data:audio/mp3;base64,' + b64;
+		}
+	};
+
+	global.stopSound = function () {
+		// Force reload by deleting audio tag
+		$('#' + global.audio.id).remove();
+		global.audio = null;
 	};
 
 	function addCamera(scene) {

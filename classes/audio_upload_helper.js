@@ -15,8 +15,8 @@ class AudioUploadHelper {
 		tmp.file({ mode: 0o644, prefix: 'audio-upload-' }, function _tempFileCreated(err, path, fd, cleanupCallback) {
 			if (err) throw err;
 
-			console.log('File: ', path);
-			console.log('Filedescriptor: ', fd);
+			// console.log('File: ', path);
+			// console.log('Filedescriptor: ', fd);
 
 			// Write b64 to file
 			let base64Data = b64.replace(/^data:audio\/mp3;base64,/, '');
@@ -153,6 +153,13 @@ class AudioUploadHelper {
 
 	static clients = [];
 
+	// Firebase admin, set in index
+	static admin;
+
+	static setAdmin(admin) {
+		this.admin = admin;
+	}
+
 	static registerClient(b64, frequencyMultiplier, session) {
 		// Generate client id
 		let ids = this.clients.map(client => client.id);
@@ -191,6 +198,10 @@ class AudioUploadHelper {
 	static onSessionCompleted(session) {
 		// Get client object
 		let client = this.getClientBySessionId(session.id);
+		if (!client) {
+			console.log('No client');
+			return
+		}
 
 		// Update client object to show reflect completion
 		client.onPurchaseCompleted();

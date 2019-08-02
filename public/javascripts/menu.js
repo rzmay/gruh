@@ -151,3 +151,74 @@ form.on('submit', (e)=>{
 	})
 });
 
+/* POST PURCHASE CONFIRMATION */
+
+let modal = $('#purchaseModal');
+let aIdLabel = $('#analyticsIdentifier');
+let dismissButton = $('#modalDismiss');
+
+// If client, set aIdLabel, present modal, and set dismissButton onclick
+// Otherwise, remove the modal from the page
+if (config.isClient) {
+	aIdLabel.text(config.analyticsIdentifier);
+
+	dismissButton.click(()=>{
+		// Ensure that client id is connected
+		if (!config.clientId) return;
+		$.ajax({
+			url: '/clearclient',
+			type: 'POST',
+			dataType: 'json',
+			data: {
+				clientId: config.clientId
+			},
+			success: (data) => {
+				// Log success
+				console.log(`Destroyed client successfully: ${data.success}`)
+			},
+			error: (error) => {
+				// Log error
+				console.log(`Destroyed client successfully: ${error.success}`);
+				console.log(error.error);
+			}
+		})
+	});
+
+	modal.modal('show');
+} else {
+	modal.remove();
+}
+
+/* ANALYTICS */
+
+let requestLabel = $('#requestLabel');
+let analyticsLabel = $('#analyticsContainer');
+let timesHeardLabel = $('#timesHeard');
+let timesPlayedLabel = $('#timesPlayed');
+let analyticsInput = $('#analyticsIdentifierInput');
+let analyticsSubmit = $('#analyticsButton');
+
+// On click, generate request and get analytics
+analyticsSubmit.click(()=>{
+	let aId = analyticsInput.val();
+
+	let url = `/api/analytics?analytics_id=${aId}`;
+	requestLabel.text(`Request: ${url}`);
+
+	$.ajax({
+		url: url,
+		type: 'GET',
+		dataType: 'json',
+		success: (data)=>{
+			analyticsLabel.text(JSON.stringify(data));
+			timesHeardLabel.text(`Times Heard: ${data.timesHeard}`);
+			timesPlayedLabel.text(`Times Played: ${data.timesPlayed}`);
+		},
+		error: (e)=>{
+			console.log(e);
+			analyticsLabel.text(JSON.stringify(e));
+			timesHeardLabel.text(e.statusText || '');
+			timesPlayedLabel.text(e.responseJSON.message || '');
+		}
+	})
+});

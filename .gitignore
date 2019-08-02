@@ -97,3 +97,6 @@ typings/
 
 # blend1
 .blend1
+
+# Firebase admin privkey
+gruh-firebase-admin-privkey.json
