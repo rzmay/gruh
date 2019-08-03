@@ -1,4 +1,5 @@
 /* Universal */
+
 body {
   padding: 50px;
 
@@ -21,14 +22,8 @@ a {
   min-height: 100%;
 }
 
+
 /* Home */
-#start {
-  position: relative;
-  width: 300px;
-  top: 50%;
-  transform: translate(0, -50%);
-  font-size: 50px;
-}
 
 #container {
   position: absolute;
@@ -54,7 +49,9 @@ a {
   text-align: center;
 }
 
+
 /* Menu */
+
 #menuContainer {
   position: absolute;
   top: 0;
@@ -101,7 +98,9 @@ a {
   box-shadow: 5px 5px 50px 5px #c0d6cb;
 }
 
+
 /* Error */
+
 #cryer {
   z-index: -999
 }
