@@ -2,7 +2,6 @@ const crypto = require('crypto');
 const tmp = require('tmp');
 const stream = require('stream');
 
-var serviceAccount = require('../gruh-firebase-admin-privkey.json');
 
 class UploadClient {
 

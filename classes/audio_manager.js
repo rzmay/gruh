@@ -64,7 +64,7 @@ var AudioManager = class {
 
 	/* FIREBASE (STATIC) */
 
-	// Default aId in case of failurs
+	// Default aId in case of failure
 	static defaultAnalyticsId = 'default';
 
 	// Get next aId from queue (if queue is empty, call getIdFromAll
