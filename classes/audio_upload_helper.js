@@ -1,19 +1,22 @@
 var fs = require('fs');
 var tmp = require('tmp');
+var crypto = require('crypto');
 const { getAudioDurationInSeconds } = require('get-audio-duration');
 
 const config = require('../config');
+const UploadClient = require('./upload_client');
 
 tmp.setGracefulCleanup();
 
 class AudioUploadHelper {
 
+	/* FILE READING */
 	static getFileInfoFromBase64(b64, completion) {
 		tmp.file({ mode: 0o644, prefix: 'audio-upload-' }, function _tempFileCreated(err, path, fd, cleanupCallback) {
 			if (err) throw err;
 
-			console.log('File: ', path);
-			console.log('Filedescriptor: ', fd);
+			// console.log('File: ', path);
+			// console.log('Filedescriptor: ', fd);
 
 			// Write b64 to file
 			let base64Data = b64.replace(/^data:audio\/mp3;base64,/, '');
@@ -22,28 +25,23 @@ class AudioUploadHelper {
 			});
 
 			// Get file size
-			fs.stat(path, (err, stats)=>{
-				if (err) {
-					console.log(err);
-					return;
-				}
+			let byteSize = (b64.length * (3/4)) - ((b64[b64.length-2] === '=') ? 2 : 1);
+			let size = byteSize / 1000 / 1000;
 
-				let size = stats.size / 1000 / 1000;
-
-				// Get duration
-				getAudioDurationInSeconds(path)
-					.then((duration)=>{
-						completion(duration * 1000, size);
-						cleanupCallback();
-					})
-					.catch((e)=>{
-						console.log(e);
-						cleanupCallback();
-					})
-			});
+			// Get duration
+			getAudioDurationInSeconds(path)
+				.then((duration) => {
+					completion(duration * 1000, size);
+					cleanupCallback();
+				})
+				.catch((e) => {
+					console.log(e);
+					cleanupCallback();
+				})
 		});
 	}
 
+	/* REQUEST PROCESSING */
 	static processUploadCheckReq(req, completion) {
 		req.body.frequencyMultiplier = parseFloat(req.body.frequencyMultiplier);
 
@@ -90,6 +88,8 @@ class AudioUploadHelper {
 			};
 
 			if (success) {
+				response.size = size;
+				response.duration = duration;
 				response.price = this.calculateCost(duration, req.body.frequencyMultiplier, size);
 				completion(response);
 			} else {
@@ -114,8 +114,11 @@ class AudioUploadHelper {
 		let differenceScale = 0.05;
 		let finalCost = scaledCost - (differenceScale * (frequencyMultiplier - 1));
 
+		// Cost must be at least 50 cents for stripe
+		let validCost = Math.max(0.50, finalCost);
+
 		// Round and return cost
-		return  Number((finalCost).toFixed(2));
+		return  Number((validCost).toFixed(2));
 	}
 
 	static missingParamError(params) {
@@ -144,6 +147,105 @@ class AudioUploadHelper {
 
 	static fileSizeError(fileSize) {
 		return `File size ${fileSize} MB is too large (Maximum size: ${config.maxFileSize} MB)`
+	}
+
+	/* STRIPE CHECKOUT HANDLING */
+
+	static clients = [];
+
+	// Firebase admin, set in index
+	static admin;
+
+	static setAdmin(admin) {
+		this.admin = admin;
+	}
+
+	static registerClient(b64, frequencyMultiplier, session) {
+		// Generate client id
+		let ids = this.clients.map(client => client.id);
+		let id = crypto.randomBytes(20).toString('hex');
+		while (ids.includes(id)) {
+			id = crypto.randomBytes(20).toString('hex');
+		}
+
+		// Create and push client
+		let client = new UploadClient(id, b64, frequencyMultiplier, session);
+		this.clients.push(client);
+
+		return client;
+	}
+
+	static getClientBySessionId(id) {
+		let ids = this.clients.map(client => client.session.id);
+
+		let index = ids.indexOf(id);
+		if (index < 0) return null;
+
+		return this.clients[ids.indexOf(id)];
+	}
+
+	static getClientById(id) {
+		let ids = this.clients.map(client => client.id);
+
+		let index = ids.indexOf(id);
+		if (index < 0) return null;
+
+		return this.clients[ids.indexOf(id)];
+	}
+
+	/* HANDLE CHECKOUT COMPLETION */
+
+	static onSessionCompleted(session) {
+		// Get client object
+		let client = this.getClientBySessionId(session.id);
+		if (!client) {
+			console.log('No client');
+			return
+		}
+
+		// Update client object to show reflect completion
+		client.onPurchaseCompleted();
+
+		// Server will send a message to the next client to send a req to the server with the client id in their cookies
+	}
+
+	// This will be called in an interval in index.js
+	static checkCompletedSessions(stripe) {
+		let self = this;
+		const events = stripe.events.list({
+			type: 'checkout.session.completed',
+			created: {
+				// Check for events created in the last 24 hours.
+				gte: Date.now() - 24 * 60 * 60,
+			},
+		}, function (err, eventList) {
+			let events = eventList.data;
+
+			// Return if there are no events
+			if (!events) {
+				return
+			}
+
+			console.log(events);
+
+			for (const event of events) {
+				const session = event.data.object;
+
+				// Fulfill the purchase
+				self.onSessionCompleted(session);
+			}
+		})
+	}
+
+	// Called by server in index.js when a client receives the message that their purchase was completed
+	static destroyClient(id) {
+		let client = this.getClientById(id);
+
+		let index = this.clients.indexOf(client);
+		if (index < 0) return false;
+
+		this.clients.splice(index, 1);
+		return true;
 	}
 }
 

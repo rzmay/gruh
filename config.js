@@ -1,10 +1,10 @@
 const fs = require('fs');
-
 const MerchTag = require('./classes/merch_tag');
+
+require('dotenv').config();
 
 /* Base JSON, anything that requires no javascript */
 let config = {
-	'root': __dirname,
 	'permittedFrequencyMultipliers': [
 		1,
 		2,
@@ -12,7 +12,8 @@ let config = {
 		10
 	],
 	'maxFileSize': 1,
-	'maxAudioDuration': 15000,
+	'maxPayloadSize': 2,
+	'maxAudioDuration': 15 * 1000,
 	credits: [
 		{
 			name: 'Robert May',
@@ -76,6 +77,20 @@ let config = {
 
 	shortDescription: 'Gruh is a platform on which you can exercise your right of' +
 		' free speech by uploading any audio file for Gruh to say with complete anonymity.',
+
+	stripePublicKey: process.env.STRIPE_PK,
+
+	private: {
+		'root': __dirname,
+		'stripeSessionPollDelay': 3 * 1000,
+	},
+
+	getPublic: ()=>{
+		let copy = JSON.parse(JSON.stringify(config));
+		copy.private = 'private';
+
+		return copy;
+	}
 };
 
 module.exports = config;

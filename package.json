@@ -6,17 +6,22 @@
     "start": "node ./bin/www"
   },
   "dependencies": {
+    "@firebase/app": "^0.4.12",
+    "@firebase/app-types": "^0.4.2",
     "atob": "^2.1.2",
     "based-blob": "^1.0.1",
     "body-parser": "^1.19.0",
+    "chance": "^1.0.18",
     "connect-busboy": "0.0.2",
     "connect-form": "^0.2.1",
     "content-type": "^1.0.4",
     "cookie-parser": "~1.4.3",
     "debug": "~2.6.9",
+    "dotenv": "^8.0.0",
     "express": "~4.16.0",
     "express-fileupload": "^1.1.5",
     "express-form-data": "^2.0.10",
+    "firebase-admin": "^8.3.0",
     "formidable": "^1.2.1",
     "fs": "0.0.1-security",
     "get-audio-duration": "^1.0.0",
@@ -25,9 +30,11 @@
     "multer": "^1.4.2",
     "pug": "^2.0.3",
     "raw-body": "^2.4.1",
+    "request": "^2.88.0",
     "socket.io": "^2.2.0",
     "stream-buffers": "^3.0.2",
     "streamifier": "^0.1.1",
+    "stripe": "^7.5.0",
     "tmp": "^0.1.0"
   }
 }

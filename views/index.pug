@@ -6,16 +6,36 @@ block content
     script.
         window.config = !{JSON.stringify(info).replace(/<\//g, '<\\/')};
 
+    // Message in case of failure to load webgl
     p Please enable webgl
 
-    div#blocker
-        button.btn.btn-dark.btn-lg#start enter
+    // Block screen until interaction is forced
+    div.p-4#blocker
+        h2.text-danger.mb-4 WARNING
+        hr.my-4.border-danger
+        lead.font-weight-bold.text-light.mb-4 There may be disturbing audio on this page.
+        br
+        p.text-light.p-4.
+            Everyone who visits this site has the ability to upload any audio file (15
+            seconds or below). The upload is completely anonymous and unregulated.
+            Due to the lack of censorship and regulation, there may be some disturbing
+            or offensive content ahead that the owner of the website is not responsible
+            for.
+        button.btn.btn-dark.btn-lg.mt-5.mb-4#start I understand
+        br
+        small.text-light.
+            If you would like to upload your own audio file, you can access the menu by
+            clicking the button that appears when you mouse over the top left corner.
 
+    // Webgl container
     div#container
 
+    // Menu near fullscreen container
     div#menuContainer
+        // Menu collapse
         div.collapse#menu
             div.card.card-body#menuCard
+                // Title
                 div.row.pl-5
                     div.pl-4.rounded.shadow#menuTitle
                         div.row
@@ -25,16 +45,22 @@ block content
                     div.col-2
                         img.mr-3(src='images/gruh.png', height='180px')
                 hr.my-4
+
+                // Menu tabs
                 ul.nav.nav-tabs#shopTab(role='tablist')
                     li.nav-item
-                        a.nav-link.active#uploadAudioTab(data-toggle='tab', href='#uploadAudio', role='tab' aria-controls='uploadAudio' aria-selected=true) Upload Audio
+                        a.nav-link.active#uploadAudioTab(data-toggle='tab', href='#uploadAudio', role='tab' aria-controls='uploadAudio' aria-selected) Upload Audio
                     li.nav-item
                         a.nav-link#gruhMerchTab(data-toggle='tab' href='#gruhMerch' role='tab' aria-controls='gruhMerch' aria-selected=false) Gruh Merch
+                    li.nav-item
+                        a.nav-link#analyticsTab(data-toggle='tab' href='#analytics' role='tab' aria-controls='analytics' aria-selected=false) Analytics
                     li.nav-item
                         a.nav-link#donationTab(data-toggle='tab' href='#donation' role='tab' aria-controls='donation' aria-selected=false) Donate
                     li.nav-item
                         a.nav-link#creditsTab(data-toggle='tab' href='#credits' role='tab' aria-controls='credits' aria-selected=false) Credits
                 div.tab-content.bg-light.mb-3#tabContent
+
+                    // Audio Upload Tab
                     div.tab-pane.fade.show.active#uploadAudio(role='tabpanel', aria-labelledby='uploadAudioTab')
                         div.card
                             div.card-header Audio Upload
@@ -44,7 +70,7 @@ block content
                                 form.needs-validation#uploadForm(enctype='multipart/form-data')
                                     div.form-row
                                         div.custom-file#fileInputContainer
-                                            input.custom-file-input#audioInput(type='file', accept='.mp3,audio/mpeg3', required=true, name='audioFile')
+                                            input.custom-file-input#audioInput(type='file', accept='.mp3,audio/mpeg3', required, name='audioFile')
                                             label.custom-file-label#audioInputLabel(for='audioInput') Choose file...
                                             div.invalid-tooltip#invalidFileTooltip Please choose a valid mp3 file.
                                     div.form-row
@@ -58,16 +84,39 @@ block content
                                             div.input-group
                                                 div.input-group-prepend
                                                     span.input-group-text $
-                                                input.form-control#uploadPrice(type='text', placeholder='0.00', readonly=true)
+                                                input.form-control#uploadPrice(type='text', placeholder='0.00', readonly)
                                         div.col-6.form-group
-                                            button.btn.btn-success.btn-block#submitButton(type='submit' disabled=true) Submit (Not Yet Available)
+                                            button.btn.btn-success.btn-block#submitButton(type='submit', disabled) Submit
 
+                    // Merch tab
                     div.tab-pane.fade#gruhMerch(role='tabpanel', aria-labelledby='gruhMerchTab')
                         h3.display-4.mb-2 Gruh Merchandise
                         lead.mb-5 Check out our merchandise on our #[a(href='https://teespring.com/stores/gruh-shop') teespring page]
                         div.card.mt-1
                             div.card-body.p-3.row#gruhMerchDesigns
 
+                    // Analytics tab
+                    div.tab-pane.fade#analytics(role='tabpanel', aria-labelledby='analyticsTab')
+                        h2.mb-3 Get Your Upload's Stats
+                        lead.mb-2.p-3.
+                            If you know the analytics identifier you got after uploading your
+                            audio, you can use the interface below to see how many times it
+                            has been played and how many people it has been heard by.
+                        div.card
+                            div.card-header#requestLabel Request:
+                            div.card-body
+                                p#analyticsContainer Please complete the form to make your request.
+                                hr.my-4
+                                p#timesHeard
+                                p#timesPlayed
+                        div.form-group
+                            div.form-row#analyticsIdentifierinputRow
+                                div.col-9
+                                    input.form-control#analyticsIdentifierInput(placeholder='Enter your analytics identifier here')
+                                div.col-3
+                                    button.btn-block.btn-success#analyticsButton Submit
+
+                    // Donation tab
                     div.tab-pane.fade#donation(role='tabpanel', aria-labelledby='donationTab')
                         h3.display-4.mb-2 Make a Donation
                         div.border.border-primary.rounded.m-4
@@ -80,17 +129,50 @@ block content
                                 input(type='image' src='https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif' border='0' name='submit' title='PayPal - The safer, easier way to pay online!' alt='Donate with PayPal button')
                                 img(alt='' border='0' src='https://www.paypal.com/en_US/i/scr/pixel.gif' width='1' height='1')
 
+                    // Credits tab
                     div.tab-pane.fade#credits(role='tabpanel', aria-labelledby='creditsTab')
                         h3.display-4.mb-2 Credits
                         ul.list-group#creditsList
 
-
+        // Start button
         button.btn.btn-dark#menuTrigger(type='button', data-toggle='collapse', data-target='#menu', aria-expanded=false, aria-controls='menu') Show Menu
 
+    // Modal to show purchase info
+    div.modal.fade.fullscreen#purchaseModal
+        div.modal-dialog.modal-dialog-centered
+            div.modal-content
+                div.modal-header
+                    h5.modal-title Your purchase has been completed.
+                div.modal-body
+                    lead.font-weight-bold.text-success.mb-4 Your purchase was successful!
+                    br
+                    p4.mb-4.
+                        You can use this Analytics Identifier
+                        to see how many times the audio you uploaded has been played and how
+                        many people it has been heard by.
+                    hr.my-4
+                    p4.font-weight-bold.text-danger.mb-4.
+                        Once you close this menu, there will be no way to retrieve this code,
+                        so make sure you store it someplace safe.
+                    div.card.m-4
+                        div.card-body
+                            lead#analyticsIdentifier Loading...
+                    small View these analytics in the Analytics tab of the menu.
+                div.modal-footer
+                    button.btn.btn-success#modalDismiss(type='button', data-dismiss='modal') Got it
+
+
+
+    // Stripe
+    script(src='https://js.stripe.com/v3/')
+
+    // Three
     script(src='lib/zlib.min.js')
     script(src='lib/three.min.js')
     script(src='lib/GLTFLoader.js')
     script(src='lib/OrbitControls.js')
+
+    // Custom graphics
     script(src='javascripts/particle.js')
     script(src='javascripts/particle_system.js')
     script(src='javascripts/graphics.js')

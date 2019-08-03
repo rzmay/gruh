@@ -52,13 +52,17 @@ let fileLabel = $('#audioInputLabel');
 let fileInput = $('#audioInput');
 let fileInputContainer = $('#fileInputContainer');
 let frequencyMultiplier = $('#frequencyMultiplier');
+let submitButton = $('#submitButton');
 let priceLabel = $('#uploadPrice');
 let invalidTooltip = $('#invalidFileTooltip');
 
-// Stop reload
-form.on('submit', (e)=>{  });
+function showErrorTooltip(message) {
+	invalidTooltip.text(message);
+	fileInput.removeClass('is-valid');
+	fileInput.addClass('is-invalid');
+}
 
-function uploadFile() {
+function uploadFile(url, success) {
 	let reader = new FileReader();
 	let file = fileInput[0].files[0];
 
@@ -66,7 +70,7 @@ function uploadFile() {
 	reader.onload = function () {
 		let b64 = reader.result;
 		$.ajax({
-			url: 'audio.check',
+			url: url,
 			type: 'POST',
 			dataType: 'json',
 			data: {
@@ -74,23 +78,26 @@ function uploadFile() {
 				frequencyMultiplier: frequencyMultiplier.val()
 			},
 			success: (data) => {
-				console.log(data);
-
 				// Set price input
 				priceLabel.attr('placeholder', data.price);
 				fileInput.removeClass('is-invalid');
 				fileInput.addClass('is-valid');
+				submitButton.attr('disabled', false);
+
+				// Callback
+				if (success) {
+					success(data, b64);
+				}
 			},
 			error: (error) => {
 				// Reset inputs
 				fileInput[0].value = null;
 				fileLabel.text('Choose file...');
 				priceLabel.attr('placeholder', 0.00);
+				submitButton.attr('disabled', true);
 
 				// Set tooltip
-				invalidTooltip.text(error.responseJSON.error);
-				fileInput.removeClass('is-valid');
-				fileInput.addClass('is-invalid');
+				showErrorTooltip(error.responseJSON.error);
 			}
 		});
 
@@ -105,21 +112,115 @@ fileInput.on('change', () => {
 
 	// Return if file is too large
 	if (file.size/1024/1024 > config.maxFileSize) {
-		invalidTooltip.text(`Max file size is ${config.maxFileSize}mb. Please select a smaller file.`);
-		fileInput.removeClass('is-valid');
-		fileInput.addClass('is-invalid');
-		fileInput[0].value = null;
-		return
+			showErrorTooltip(`Max file size is ${config.maxFileSize}mb. Please select a smaller file.`);
+			fileInput[0].value = null;
+			submitButton.attr('disabled', true);
+
+			return
 	}
 
 	let fileName = fileInput[0].files[0].name;
 	fileLabel.text(fileName);
 
-	uploadFile();
+	uploadFile('audio.check');
 });
 
 frequencyMultiplier.on('change', () => {
-	uploadFile();
+	uploadFile('audio.check');
 });
 
+/* Upload file & pay */
+let stripe = Stripe(config.stripePublicKey);
 
+form.on('submit', (e)=>{
+	// Stop reload
+	e.preventDefault();
+
+	// Temporarily disable button
+	submitButton.attr('disabled', true);
+
+	// Stripe
+	uploadFile('audio.upload', (result, b64)=>{
+		// Round numbers
+		let duration = Number((result.duration/1000).toFixed(1));
+		let size = Number((result.size).toFixed(3));
+
+		stripe.redirectToCheckout({
+			sessionId: result.session.id
+		}).then(function (result) {
+			showErrorTooltip(result.error.message);
+		});
+	})
+});
+
+/* POST PURCHASE CONFIRMATION */
+
+let modal = $('#purchaseModal');
+let aIdLabel = $('#analyticsIdentifier');
+let dismissButton = $('#modalDismiss');
+
+// If client, set aIdLabel, present modal, and set dismissButton onclick
+// Otherwise, remove the modal from the page
+if (config.isClient) {
+	aIdLabel.text(config.analyticsIdentifier);
+
+	dismissButton.click(()=>{
+		// Ensure that client id is connected
+		if (!config.clientId) return;
+		$.ajax({
+			url: '/clearclient',
+			type: 'POST',
+			dataType: 'json',
+			data: {
+				clientId: config.clientId
+			},
+			success: (data) => {
+				// Log success
+				console.log(`Destroyed client successfully: ${data.success}`)
+			},
+			error: (error) => {
+				// Log error
+				console.log(`Destroyed client successfully: ${error.success}`);
+				console.log(error.error);
+			}
+		})
+	});
+
+	modal.modal('show');
+} else {
+	modal.remove();
+}
+
+/* ANALYTICS */
+
+let requestLabel = $('#requestLabel');
+let analyticsLabel = $('#analyticsContainer');
+let timesHeardLabel = $('#timesHeard');
+let timesPlayedLabel = $('#timesPlayed');
+let analyticsInput = $('#analyticsIdentifierInput');
+let analyticsSubmit = $('#analyticsButton');
+
+// On click, generate request and get analytics
+analyticsSubmit.click(()=>{
+	let aId = analyticsInput.val();
+
+	let url = `/api/analytics?analytics_id=${aId}`;
+	requestLabel.text(`Request: ${url}`);
+
+	$.ajax({
+		url: url,
+		type: 'GET',
+		dataType: 'json',
+		success: (data)=>{
+			analyticsLabel.text(JSON.stringify(data));
+			timesHeardLabel.text(`Times Heard: ${data.timesHeard}`);
+			timesPlayedLabel.text(`Times Played: ${data.timesPlayed}`);
+		},
+		error: (e)=>{
+			console.log(e);
+			analyticsLabel.text(JSON.stringify(e));
+			timesHeardLabel.text(e.statusText || '');
+			timesPlayedLabel.text(e.responseJSON.message || '');
+		}
+	})
+});
