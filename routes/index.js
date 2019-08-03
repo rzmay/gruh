@@ -20,9 +20,13 @@ var io = socket();
 var soundPath = '../audio/sound.mp3';
 
 // Initialize firebase app
-const serviceAccount = config.private.root + '/gruh-firebase-admin-privkey.json';
+// const serviceAccount = config.private.root + '/gruh-firebase-admin-privkey.json';
 admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount),
+  credential: admin.credential.cert({
+    private_key: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+    client_email: process.env.FIREBASE_CLIENT_EMAIL,
+    project_id: process.env.FIREBASE_PROJECT_ID,
+  }),
   databaseURL: 'https://gruh-a1cf9.firebaseio.com',
   storageBucket: 'gruh-a1cf9.appspot.com'
 });
@@ -192,14 +196,14 @@ router.get('/gruh.png', function(req, res, next) {
 
 /* POST Stripe payment webhook */
 router.post('/stripe_webhook', function(req, res, next) {
-  const sig = request.headers['stripe-signature'];
+  let sig = req.headers['stripe-signature'];
 
   let event;
   try {
     event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
   } catch (err) {
-    console.log(`WEBHOOK ERROR: ${err.message}`);
-    res.status(400).send(`Webhook Error: ${err.message}`);
+    console.log(`Webhook Error: ${err.message}`);
+    return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
   // Handle the event

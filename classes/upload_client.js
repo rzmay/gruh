@@ -109,9 +109,13 @@ class UploadClient {
 			completion(err);
 		});
 
+		let self = this;
 		writeStream.on('finish', () => {
+			// Clear b64 to free memory
+			self.b64 = null;
+
 			// Upload is complete
-			completion(`audio/${this.aId}`)
+			completion(`audio/${self.aId}`)
 		});
 
 		// Write b64 to stream

@@ -12,7 +12,7 @@ let config = {
 		10
 	],
 	'maxFileSize': 1,
-	'maxPayloadSize': 1.5,
+	'maxPayloadSize': 2,
 	'maxAudioDuration': 15 * 1000,
 	credits: [
 		{

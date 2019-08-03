@@ -1,5 +1,6 @@
 var createError = require('http-errors');
 var express = require('express');
+var bodyParser = require('body-parser');
 var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
@@ -15,6 +16,11 @@ var app = express();
 // socket.io
 app.io = indexRouter.io;
 
+// Settings for webhook
+app.use('/stripe_webhook', bodyParser.raw({
+  type: "*/*"
+}));
+
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'pug');
@@ -24,7 +30,7 @@ app.use(express.json({
   limit: `${config.maxPayloadSize}mb`
 }));
 app.use(express.urlencoded({
-  extended: false,
+  extended: true,
   limit: `${config.maxPayloadSize}mb`
 }));
 app.use(cookieParser());

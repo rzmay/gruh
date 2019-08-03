@@ -10,8 +10,22 @@ block content
     p Please enable webgl
 
     // Block screen until interaction is forced
-    div#blocker
-        button.btn.btn-dark.btn-lg.mt-5#start enter
+    div.p-4#blocker
+        h2.text-danger.mb-4 WARNING
+        hr.my-4.border-danger
+        lead.font-weight-bold.text-light.mb-4 There may be disturbing audio on this page.
+        br
+        p.text-light.p-4.
+            Everyone who visits this site has the ability to upload any audio file (15
+            seconds or below). The upload is completely anonymous and unregulated.
+            Due to the lack of censorship and regulation, there may be some disturbing
+            or offensive content ahead that the owner of the website is not responsible
+            for.
+        button.btn.btn-dark.btn-lg.mt-5.mb-4#start I understand
+        br
+        small.text-light.
+            If you would like to upload your own audio file, you can access the menu by
+            clicking the button that appears when you mouse over the top left corner.
 
     // Webgl container
     div#container
@@ -84,7 +98,7 @@ block content
                     // Analytics tab
                     div.tab-pane.fade#analytics(role='tabpanel', aria-labelledby='analyticsTab')
                         h2.mb-3 Get Your Upload's Stats
-                        lead.mb-2.
+                        lead.mb-2.p-3.
                             If you know the analytics identifier you got after uploading your
                             audio, you can use the interface below to see how many times it
                             has been played and how many people it has been heard by.
