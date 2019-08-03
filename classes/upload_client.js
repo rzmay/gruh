@@ -7,7 +7,7 @@ class UploadClient {
 
 	/* STATIC */
 	// firebase admin, set in index.js
-	static admin;
+	static admin = null;
 
 	static setAdmin(admin) {
 		this.admin = admin;
