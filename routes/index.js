@@ -339,9 +339,18 @@ function doBlink() {
   setTimeout(doBlink, ((Math.random() * 3) +  5) * 1000);
 }
 
+// Set up client clearing interval
+function destroyOldClientsInterval() {
+  let millisPerHalfHour = 30*60*1000;
+  return setInterval(()=>{
+    audioUploadHelper.destroyOldClients()
+  }, millisPerHalfHour);
+}
+
 // Begin intervals
 doBlink();
 sendSoundFirebase();
+destroyOldClientsInterval();
 
 router.io = io;
 

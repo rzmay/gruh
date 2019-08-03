@@ -25,7 +25,10 @@ class UploadClient {
 		this.wasCompleted = false;
 
 		// Analytics identifier
-		this.aId = null
+		this.aId = null;
+
+		// Date created
+		this.dateCreated = new Date();
 	}
 
 	setSession(session) {

@@ -247,6 +247,26 @@ class AudioUploadHelper {
 		this.clients.splice(index, 1);
 		return true;
 	}
+
+	// Destroy a client after 24 hours
+	static destroyOldClients() {
+		let now = new Date();
+		let oldClients = [];
+
+		// Get old client ids
+		let secondsPerDay = 24 * 60 * 60;
+		for (let i = 0; i < this.clients.length; i++) {
+			let timeBetween = (now.getTime() - this.clients[i].getTime()) / 1000;
+
+			if (timeBetween > secondsPerDay) oldClients.push(this.clients[i]);
+		}
+
+		// Destroy old clients
+		for (let j = 0; j < oldClients.length; j++) {
+			console.log(`Destroying old client: ${oldClients[j]}`);
+			this.destroyClient(oldClients[j]);
+		}
+	}
 }
 
 module.exports = AudioUploadHelper;
