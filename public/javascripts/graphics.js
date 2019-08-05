@@ -667,7 +667,7 @@ global.onstart.push(function () {
 			// Camera rotates around head
 
 			let targetRot = new THREE.Quaternion();
-			targetRot.setFromEuler( new THREE.Euler( 0, global.mouse.x / 2000 - Math.PI/2, -global.mouse.y / 2000) );
+			targetRot.setFromEuler( new THREE.Euler( 0, global.mouse.x / window.innerWidth - Math.PI/2, -global.mouse.y / window.innerHeight ) );
 			global.curRotation.slerp( targetRot, Math.min(1, global.dt * .01) );
 
 
