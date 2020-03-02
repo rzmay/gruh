@@ -5,6 +5,7 @@ $enable-responsive-font-sizes: true;
   transition: 0.5s;
 
   &.bg-dark {
+    border-bottom: 3px solid #660000;
     background-color: #101010 !important;
   }
 

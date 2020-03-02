@@ -1,15 +1,22 @@
 import * as THREE from 'three';
 import {GLTF, GLTFLoader} from 'three/examples/jsm/loaders/GLTFLoader';
+import {TranslucentShader} from "three/examples/jsm/shaders/TranslucentShader";
+import MeshObject from './MeshObject';
+
+import * as images from '../../../../assets/images/*.*';
+import {ShaderMaterial} from "three";
 
 class Gruh {
 
   gltf: GLTF | undefined;
 
-  head: THREE.Object3D | undefined;
-  leftEye: THREE.Object3D | undefined;
-  rightEye: THREE.Object3D | undefined;
+  head: MeshObject | undefined;
+  leftEye: MeshObject | undefined;
+  rightEye: MeshObject | undefined;
+  leftIris: MeshObject | undefined;
+  rightIris: MeshObject | undefined;
 
-  mesh: THREE.Mesh | undefined;
+  onLoaded: ((GLTF) => void) | undefined;
 
   constructor(scene: THREE.Scene) {
     const loader = new GLTFLoader();
@@ -25,17 +32,82 @@ class Gruh {
 
         this.gltf = gltf;
 
-        this.head = gltf.scene.getObjectByName('Gruh');
-        this.leftEye = gltf.scene.getObjectByName('Eye_L');
-        this.rightEye = gltf.scene.getObjectByName('Eye_R');
+        // Get parts (head, eyes, irises, mesh)
+        const head = gltf.scene.getObjectByName('Gruh');
 
-        if (this.head != undefined) {
-          this.head.traverse((node) => {
-            if (node instanceof THREE.Mesh) {
-              this.mesh = node as THREE.Mesh;
-            }
-          });
-        }
+        const leftEye = gltf.scene.getObjectByName('Eye_L');
+        const rightEye = gltf.scene.getObjectByName('Eye_R');
+
+        const leftIris = gltf.scene.getObjectByName('Iris_L');
+        const rightIris = gltf.scene.getObjectByName('Iris_R');
+
+        if (head != undefined) this.head = new MeshObject(head);
+
+        if (leftEye != undefined) this.leftEye = new MeshObject(leftEye);
+        if (rightEye != undefined) this.rightEye = new MeshObject(rightEye);
+
+        if (leftIris != undefined) this.leftIris = new MeshObject(leftIris);
+        if (rightIris != undefined) this.rightIris = new MeshObject(rightIris);
+
+        // Create materials
+        let textureLoader = new THREE.TextureLoader();
+
+        const scleraMaterial = new THREE.MeshPhysicalMaterial({
+          map: textureLoader.load(images['Sclera_COL'].png),
+          bumpMap: textureLoader.load(images['Sclera_BUMP'].png),
+          bumpScale: 0.1,
+          roughness: 0.5,
+          clearcoat: 1.0,
+          clearcoatRoughness: 0.1
+        });
+
+        const lensMaterial = new THREE.MeshPhysicalMaterial({
+          color: 0xffffff,
+          roughness: 0.0,
+          depthWrite: false,
+          transparency: 0.75,
+          refractionRatio: 1.05,
+          opacity: 1.0,
+          transparent: true
+        });
+
+        const irisMaterial = new THREE.MeshPhysicalMaterial({
+          map: textureLoader.load(images['Iris_COL'].png),
+          bumpMap: textureLoader.load(images['Iris_BUMP'].png),
+          bumpScale: 0.2,
+          roughness: 0.0
+        });
+
+        var shader = TranslucentShader;
+        var uniforms = THREE.UniformsUtils.clone(shader.uniforms);
+        uniforms.map.value = textureLoader.load(images['white'].png);
+        uniforms.thicknessColor.value = new THREE.Color(0xe75f51);
+        uniforms.thicknessPower.value = 1;
+        uniforms.thicknessAttenuation.value = 500;
+        uniforms.thicknessAmbient.value = 200;
+
+        const gruhSkinMaterial = new ShaderMaterial({
+          uniforms: uniforms,
+          vertexShader: shader.vertexShader,
+          fragmentShader: shader.fragmentShader,
+          lights: true
+        });
+        gruhSkinMaterial.extensions.derivatives = true;
+
+        // Set materials
+        this.leftEye?.setMaterial('EyeSclera', scleraMaterial);
+        this.rightEye?.setMaterial('EyeSclera', scleraMaterial);
+
+        this.leftEye?.setMaterial('EyeLens', lensMaterial);
+        this.rightEye?.setMaterial('EyeLens', lensMaterial);
+
+        this.leftIris?.setMaterial('Iris', irisMaterial);
+        this.rightIris?.setMaterial('Iris', irisMaterial);
+
+        this.head?.setMaterial('GruhSkin', gruhSkinMaterial);
+
+        // Delegate
+        if (this.onLoaded != undefined) this.onLoaded(gltf);
       }
     );
   }
@@ -44,31 +116,41 @@ class Gruh {
     for (var eye of [this.leftEye, this.rightEye]) {
       if (eye == undefined) return;
 
-      let currentRotation = new THREE.Quaternion().copy(eye.quaternion);
+      let currentRotation = new THREE.Quaternion().copy(eye.object.quaternion);
 
-      eye.lookAt(position);
-      let targetRotation = new THREE.Quaternion().copy(eye.quaternion);
+      eye.object.lookAt(position);
+      let targetRotation = new THREE.Quaternion().copy(eye.object.quaternion);
 
-      THREE.Quaternion.slerp(currentRotation, targetRotation, eye.quaternion, 0.05);
+      THREE.Quaternion.slerp(currentRotation, targetRotation, eye.object.quaternion, 0.05);
     }
   }
 
   setMouthOpen(amount: number) {
-    this.setMorphTarget(0, amount);
+    this.head?.setMorphTargetInfluence('MouthOpen', amount);
   }
 
   setEyebrowsRaised(amount: number) {
-    this.setMorphTarget(1, amount);
+    this.head?.setMorphTargetInfluence('Eyebrows', amount);
+  }
+
+  setBlinkBoth(amount: number) {
+    this.head?.setMorphTargetInfluence('BlinkL', amount);
+    this.head?.setMorphTargetInfluence('BlinkR', amount);
   }
 
   setBlink(left: number, right: number) {
-    this.setMorphTarget(2, right);
-    this.setMorphTarget(3, left);
+    this.head?.setMorphTargetInfluence('BlinkL', left);
+    this.head?.setMorphTargetInfluence('BlinkR', right);
   }
 
-  private setMorphTarget(index: number, amount: number) {
-    if (this.mesh == undefined || this.mesh.morphTargetInfluences == undefined) return;
-    this.mesh.morphTargetInfluences[index] = amount;
+  setPupilDilationBoth(amount: number) {
+    this.leftIris?.setMorphTargetInfluence('PupilExpand', amount);
+    this.rightIris?.setMorphTargetInfluence('PupilExpand', amount);
+  }
+
+  setPupilDilation(left: number, right: number) {
+    this.leftIris?.setMorphTargetInfluence('PupilExpand', left);
+    this.rightIris?.setMorphTargetInfluence('PupilExpand', right);
   }
 }
 
