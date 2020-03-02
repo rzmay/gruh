@@ -2,15 +2,18 @@ import React from 'react';
 import { BrowserRouter, Route, Switch } from 'react-router-dom';
 import { render } from 'react-dom';
 import * as serviceWorker from './serviceWorker';
+import { FocusContextProvider } from './services/context.service';
 
 import './index.css';
 import Home from './pages/Home/Home';
 
 render((
   <BrowserRouter>
-    <Switch>
-      <Route exact path="/" component={Home} />
-    </Switch>
+    <FocusContextProvider>
+      <Switch>
+        <Route exact path="/" component={Home} />
+      </Switch>
+    </FocusContextProvider>
   </BrowserRouter>
 ), document.getElementById('root'));
 

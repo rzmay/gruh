@@ -1,0 +1,20 @@
+$enable-responsive-font-sizes: true;
+
+.navbar {
+
+  transition: 0.5s;
+
+  &.bg-dark {
+    background-color: #101010 !important;
+  }
+
+  .navbar-brand {
+    color: #b00 !important;
+  }
+
+}
+
+.content-wrapper {
+  width: 100vw;
+  height: 100vh;
+}

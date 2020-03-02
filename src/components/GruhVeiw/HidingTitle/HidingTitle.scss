@@ -1,0 +1,58 @@
+.hiding-title-container {
+
+  margin: 0;
+
+  .hiding-title {
+
+    transition: 0.5s;
+
+    margin: 0;
+
+    position: absolute;
+    left: 0;
+    top: 0;
+
+    z-index: 0;
+
+    background: linear-gradient(90deg, rgba(10, 10, 10, 1), rgba(10, 10, 10, 0.8) 50%, rgba(10, 10, 10, 0));
+
+    &.hidden {
+      opacity: 0;
+
+      left: -30vw;
+    }
+
+    .display-1 {
+      color: #bb0000;
+    }
+
+    button {
+      background: #bb0000;
+      border-color: #bb0000;
+    }
+  }
+
+  .chevron {
+
+    transition: 0.5s;
+
+    position: absolute;
+    left: 10px;
+
+    width: 50px;
+
+    fill: #606060 !important;
+
+    &.hidden {
+      opacity: 0;
+
+      position: absolute;
+      left: 50vw;
+    }
+
+    &:hover {
+      fill: #a0a0a0 !important;
+      width: 70px;
+    }
+  }
+}
