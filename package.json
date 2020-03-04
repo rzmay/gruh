@@ -19,6 +19,7 @@
     "firebase-admin": "^8.9.2",
     "formik": "^2.1.4",
     "http-errors": "~1.6.2",
+    "lerp": "^1.0.3",
     "morgan": "~1.9.0",
     "parcel-bundler": "^1.12.4",
     "react": "^16.12.0",

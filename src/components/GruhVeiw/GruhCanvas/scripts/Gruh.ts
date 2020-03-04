@@ -1,10 +1,10 @@
 import * as THREE from 'three';
 import {GLTF, GLTFLoader} from 'three/examples/jsm/loaders/GLTFLoader';
-import {TranslucentShader} from "three/examples/jsm/shaders/TranslucentShader";
+import { SubdivisionModifier } from 'three/examples/jsm/modifiers/SubdivisionModifier';
+import GruhMaterials from './GruhMaterials';
 import MeshObject from './MeshObject';
-
-import * as images from '../../../../assets/images/*.*';
-import {ShaderMaterial} from "three";
+import { ModifierStack } from './ModifierStack';
+import lerp from 'lerp';
 
 class Gruh {
 
@@ -16,6 +16,9 @@ class Gruh {
   leftIris: MeshObject | undefined;
   rightIris: MeshObject | undefined;
 
+  headModifier: ModifierStack | undefined;
+
+  loaded: boolean = false;
   onLoaded: ((GLTF) => void) | undefined;
 
   constructor(scene: THREE.Scene) {
@@ -24,9 +27,9 @@ class Gruh {
       '/asset/model/gruh',
       (gltf) => {
         // Set up gltf & add to scene
-        gltf.scene.position.set(0, -1, 0);
-        gltf.scene.scale.set(10, 10, 10);
-        gltf.scene.rotation.set(0, 0, 0);
+        // gltf.scene.position.set(0, -1, 0);
+        // gltf.scene.scale.set(10, 10, 10);
+        // gltf.scene.rotation.set(0, 0, 0);
 
         scene.add(gltf.scene);
 
@@ -41,72 +44,65 @@ class Gruh {
         const leftIris = gltf.scene.getObjectByName('Iris_L');
         const rightIris = gltf.scene.getObjectByName('Iris_R');
 
-        if (head != undefined) this.head = new MeshObject(head);
+        // Get head
+        if (head != undefined) {
+          console.log(head);
+          this.head = new MeshObject(head);
+        }
 
-        if (leftEye != undefined) this.leftEye = new MeshObject(leftEye);
-        if (rightEye != undefined) this.rightEye = new MeshObject(rightEye);
+        // Get eyes
+        if (leftEye != undefined && rightEye != undefined) {
+          this.leftEye = new MeshObject(leftEye);
+          this.rightEye = new MeshObject(rightEye);
+        }
 
-        if (leftIris != undefined) this.leftIris = new MeshObject(leftIris);
-        if (rightIris != undefined) this.rightIris = new MeshObject(rightIris);
-
-        // Create materials
-        let textureLoader = new THREE.TextureLoader();
-
-        const scleraMaterial = new THREE.MeshPhysicalMaterial({
-          map: textureLoader.load(images['Sclera_COL'].png),
-          bumpMap: textureLoader.load(images['Sclera_BUMP'].png),
-          bumpScale: 0.1,
-          roughness: 0.5,
-          clearcoat: 1.0,
-          clearcoatRoughness: 0.1
-        });
-
-        const lensMaterial = new THREE.MeshPhysicalMaterial({
-          color: 0xffffff,
-          roughness: 0.0,
-          depthWrite: false,
-          transparency: 0.75,
-          refractionRatio: 1.05,
-          opacity: 1.0,
-          transparent: true
-        });
-
-        const irisMaterial = new THREE.MeshPhysicalMaterial({
-          map: textureLoader.load(images['Iris_COL'].png),
-          bumpMap: textureLoader.load(images['Iris_BUMP'].png),
-          bumpScale: 0.2,
-          roughness: 0.0
-        });
-
-        var shader = TranslucentShader;
-        var uniforms = THREE.UniformsUtils.clone(shader.uniforms);
-        uniforms.map.value = textureLoader.load(images['white'].png);
-        uniforms.thicknessColor.value = new THREE.Color(0xe75f51);
-        uniforms.thicknessPower.value = 1;
-        uniforms.thicknessAttenuation.value = 500;
-        uniforms.thicknessAmbient.value = 200;
-
-        const gruhSkinMaterial = new ShaderMaterial({
-          uniforms: uniforms,
-          vertexShader: shader.vertexShader,
-          fragmentShader: shader.fragmentShader,
-          lights: true
-        });
-        gruhSkinMaterial.extensions.derivatives = true;
+        // Get irises
+        if (leftIris != undefined && rightIris != undefined) {
+          this.leftIris = new MeshObject(leftIris);
+          this.rightIris = new MeshObject(rightIris);
+        }
 
         // Set materials
-        this.leftEye?.setMaterial('EyeSclera', scleraMaterial);
-        this.rightEye?.setMaterial('EyeSclera', scleraMaterial);
+        this.leftEye?.setMaterial('EyeSclera', GruhMaterials.sclera());
+        this.rightEye?.setMaterial('EyeSclera', GruhMaterials.sclera());
 
-        this.leftEye?.setMaterial('EyeLens', lensMaterial);
-        this.rightEye?.setMaterial('EyeLens', lensMaterial);
+        this.leftEye?.setMaterial('EyeLens', GruhMaterials.lens());
+        this.rightEye?.setMaterial('EyeLens', GruhMaterials.lens());
 
-        this.leftIris?.setMaterial('Iris', irisMaterial);
-        this.rightIris?.setMaterial('Iris', irisMaterial);
+        this.leftIris?.setMaterial('Iris', GruhMaterials.iris());
+        this.rightIris?.setMaterial('Iris', GruhMaterials.iris());
 
-        this.head?.setMaterial('GruhSkin', gruhSkinMaterial);
+        // this.head?.setMaterial('GruhSkin', GruhMaterials.skin());
+
+        // Fill light
+        const fillLight = new THREE.DirectionalLight(0xa0a0a0, 1);
+        fillLight.position.set(40, 20, 10);
+        fillLight.target = (this.head?.object || new THREE.Object3D());
+        scene.add(fillLight);
+
+        // const fillLightHelper = new THREE.DirectionalLightHelper(fillLight);
+        // scene.add(fillLightHelper);
+
+        // Back light
+        const backLight = new THREE.SpotLight(0xc0c0c0, 0.4);
+        backLight.position.set(0, 0, -40);
+        backLight.target = (this.head?.object || new THREE.Object3D());
+        scene.add(backLight);
+
+        // const backLightHelper = new THREE.SpotLightHelper(backLight);
+        // scene.add(backLightHelper);
+
+        // Key light
+        const keyLight = new THREE.SpotLight(0xc4b0b0, 1);
+        keyLight.position.set(-50, -5, 40);
+        keyLight.target = (this.head?.object || new THREE.Object3D());
+        scene.add(keyLight);
+
+        // const keyLightHelper = new THREE.SpotLightHelper(keyLight);
+        // scene.add(keyLightHelper);
 
         // Delegate
+        this.loaded = true;
         if (this.onLoaded != undefined) this.onLoaded(gltf);
       }
     );
@@ -116,6 +112,7 @@ class Gruh {
     for (var eye of [this.leftEye, this.rightEye]) {
       if (eye == undefined) return;
 
+      // Rotate to camera
       let currentRotation = new THREE.Quaternion().copy(eye.object.quaternion);
 
       eye.object.lookAt(position);
@@ -123,10 +120,23 @@ class Gruh {
 
       THREE.Quaternion.slerp(currentRotation, targetRotation, eye.object.quaternion, 0.05);
     }
+
+    // Pupil dilation based on camera's x position
+    const maxXPos = Math.cos(Math.PI/3) * 170; // cos(Max rotation) * camera distance
+    const amount = Math.abs(position.x) / maxXPos;
+    this.setPupilDilationBoth(lerp(-0.8, 1, amount));
   }
 
   setMouthOpen(amount: number) {
-    this.head?.setMorphTargetInfluence('MouthOpen', amount);
+    this.head?.setMorphTargetInfluence('MouthOpenV', amount);
+  }
+
+  setMouthRoundness(amount: number) {
+    this.head?.setMorphTargetInfluence('MouthCloseH', amount);
+  }
+
+  setBreathe(amount: number) {
+    this.head?.setMorphTargetInfluence('Breathe', amount);
   }
 
   setEyebrowsRaised(amount: number) {

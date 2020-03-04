@@ -14,9 +14,9 @@ class GruhScene {
   camera: GruhCamera;
   gruh: Gruh;
 
-  private startTime: number = 0;
-  private deltaTime: number = 0;
-  private lastFrameTime: number = 0;
+  private _startTime: number = 0;
+  private _deltaTime: number = 0;
+  private _lastFrameTime: number = 0;
 
   constructor(
     container: React.RefObject<HTMLDivElement>,
@@ -39,28 +39,6 @@ class GruhScene {
     this.camera = new GruhCamera(this.scene);
     this.camera.targetRotationAmount = new Vector3(0.4, 0.2, 0);
 
-    // Add lights
-    const lightTransforms = [
-      {x: -10, y: 50, z: 300},
-      {x: 100, y: 200, z: -200},
-      {x: -10, y: 10000, z: -10},
-      {x: 10, y: -300, z: 50},
-    ];
-    for (let i = 0; i < lightTransforms.length; i++) {
-      const pointLight =
-        new THREE.PointLight(0x636363);
-
-      // set its position
-      pointLight.position.set(
-        lightTransforms[i].x,
-        lightTransforms[i].y,
-        lightTransforms[i].z
-      );
-
-      // add to the scene
-      this.scene.add(pointLight);
-    }
-
     // Add resize listener
     window.addEventListener('resize', (e) => {
       this.renderer.setSize(window.innerWidth, window.innerHeight);
@@ -73,19 +51,23 @@ class GruhScene {
     this.container.current?.appendChild(this.domElement);
 
     // Start update loop
-    this.startTime = new Date().getTime();
-    this.lastFrameTime = this.startTime;
-    this.deltaTime = 0;
+    this._startTime = new Date().getTime();
+    this._lastFrameTime = this._startTime;
+    this._deltaTime = 0;
     window.requestAnimationFrame(() => { this.update(); })
   }
 
   update() {
-    // Calculate deltaTime
-    this.deltaTime = new Date().getTime() - this.lastFrameTime;
-    this.lastFrameTime = new Date().getTime();
+    // Calculate _deltaTime
+    this._deltaTime = new Date().getTime() - this._lastFrameTime;
+    this._lastFrameTime = new Date().getTime();
 
-    // Update camera and gruh
-    this.camera.updatePosition(this.deltaTime);
+    // Update camera
+    this.camera.updatePosition(this._deltaTime);
+
+    // Update gruh
+    this.gruh.setMouthOpen((1 + Math.sin(new Date().getTime() / 2000)) / 2);
+    if (this.gruh.loaded) this.gruh.headModifier?.update();
     this.gruh.lookAt(this.camera.camera.position);
 
     // Render

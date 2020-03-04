@@ -7,7 +7,6 @@ import { useFocusContext } from '../../../services/context.service';
 
 function HidingTitle({ title, body, hidden = false }): React.ReactElement {
   const { focusState, setFocusState } = useFocusContext();
-  console.log(`HT: ${focusState}`);
 
   function hideMenu() {
     setFocusState(true);

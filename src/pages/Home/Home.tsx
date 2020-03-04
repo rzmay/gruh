@@ -6,7 +6,6 @@ import { useFocusContext } from '../../services/context.service';
 
 function Home(): React.ReactElement {
   const { focusState } = useFocusContext();
-  console.log(`Home: ${focusState}`);
 
   return (
     <Layout visible={!(focusState)} home>

@@ -6,7 +6,7 @@ class GruhCamera {
   mouseControl: boolean;
 
   targetRotationAmount: THREE.Vector3 = new THREE.Vector3(0, 0, 0); // Numbers between -1 and 1
-  private currentRotation: THREE.Quaternion = new THREE.Quaternion();
+  private _currentRotation: THREE.Quaternion = new THREE.Quaternion();
 
   constructor(scene, mouseControl = false) {
     // Set some camera attributes.
@@ -30,7 +30,7 @@ class GruhCamera {
     );
 
     // Add camera to scene
-    camera.position.set(0, 100, 1700);
+    camera.position.set(0, 10, 170);
     scene.add(camera);
 
     this.camera = camera;
@@ -60,14 +60,14 @@ class GruhCamera {
     let targetRot = new THREE.Quaternion();
     targetRot.setFromEuler( new THREE.Euler(
       0,
-      (this.targetRotationAmount.x) - Math.PI/2,
-      ((this.targetRotationAmount.y) * 0.4) // Max of 0.4
+      (this.targetRotationAmount.x) * (Math.PI / 3) - Math.PI/2, // Max of pi/3
+      ((this.targetRotationAmount.y) * (Math.PI / 12)) // Max of pi/12
     ));
-    this.currentRotation.slerp(targetRot, Math.min(1, deltaTime * 0.005));
+    this._currentRotation.slerp(targetRot, Math.min(1, deltaTime * 0.005));
 
 
-    let newPosition = new THREE.Vector3(1700, 0, 0);
-    newPosition.applyQuaternion(this.currentRotation);
+    let newPosition = new THREE.Vector3(170, 0, 0);
+    newPosition.applyQuaternion(this._currentRotation);
 
     this.camera.position.copy(newPosition);
 
