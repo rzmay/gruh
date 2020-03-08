@@ -24,18 +24,6 @@ function Navigation({ children, home, visible }): React.ReactElement {
               <Nav.Link>About</Nav.Link>
             </LinkContainer>
           </Nav>
-          <Nav>
-            <LinkContainer to="/login">
-              <Nav.Link className="mr-2">Log In</Nav.Link>
-            </LinkContainer>
-            <LinkContainer
-              to="/signup"
-              activeStyle={{}}
-              isActive={() => false}
-            >
-              <Button variant={home ? 'outline-light' : 'outline-dark'} className="d-flex align-items-center justify-content-center">Sign Up</Button>
-            </LinkContainer>
-          </Nav>
         </Navbar.Collapse>
       </Navbar>
       <div className="content-wrapper p-0 m-0">{children}</div>

@@ -28,3 +28,6 @@ yarn-error.log*
 # Parcel related files
 dist/
 .cache/
+
+# Private files
+private/

@@ -6,12 +6,14 @@ import { FocusContextProvider } from './services/context.service';
 
 import './index.css';
 import Home from './pages/Home/Home';
+import Upload from './pages/Upload/Upload';
 
 render((
   <BrowserRouter>
     <FocusContextProvider>
       <Switch>
         <Route exact path="/" component={Home} />
+        <Route exact path="/upload" component={Upload} />
       </Switch>
     </FocusContextProvider>
   </BrowserRouter>

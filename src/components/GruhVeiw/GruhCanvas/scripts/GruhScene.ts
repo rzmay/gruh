@@ -32,12 +32,12 @@ class GruhScene {
     this.scene = new THREE.Scene();
     this.scene.background = color;
 
-    // Instantiate Gruh
-    this.gruh = new Gruh(this.scene);
-
     // Instantiate camera
     this.camera = new GruhCamera(this.scene);
     this.camera.targetRotationAmount = new Vector3(0.4, 0.2, 0);
+
+    // Instantiate Gruh
+    this.gruh = new Gruh(this.scene);
 
     // Add resize listener
     window.addEventListener('resize', (e) => {
@@ -66,8 +66,7 @@ class GruhScene {
     this.camera.updatePosition(this._deltaTime);
 
     // Update gruh
-    this.gruh.setMouthOpen((1 + Math.sin(new Date().getTime() / 2000)) / 2);
-    if (this.gruh.loaded) this.gruh.headModifier?.update();
+    this.gruh.setBreathe((1 + Math.sin(new Date().getTime() / 2000)) / 2);
     this.gruh.lookAt(this.camera.camera.position);
 
     // Render

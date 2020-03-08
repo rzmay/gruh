@@ -46,7 +46,6 @@ class Gruh {
 
         // Get head
         if (head != undefined) {
-          console.log(head);
           this.head = new MeshObject(head);
         }
 
@@ -83,15 +82,6 @@ class Gruh {
         // const fillLightHelper = new THREE.DirectionalLightHelper(fillLight);
         // scene.add(fillLightHelper);
 
-        // Back light
-        const backLight = new THREE.SpotLight(0xc0c0c0, 0.4);
-        backLight.position.set(0, 0, -40);
-        backLight.target = (this.head?.object || new THREE.Object3D());
-        scene.add(backLight);
-
-        // const backLightHelper = new THREE.SpotLightHelper(backLight);
-        // scene.add(backLightHelper);
-
         // Key light
         const keyLight = new THREE.SpotLight(0xc4b0b0, 1);
         keyLight.position.set(-50, -5, 40);
@@ -118,13 +108,13 @@ class Gruh {
       eye.object.lookAt(position);
       let targetRotation = new THREE.Quaternion().copy(eye.object.quaternion);
 
-      THREE.Quaternion.slerp(currentRotation, targetRotation, eye.object.quaternion, 0.05);
+      THREE.Quaternion.slerp(currentRotation, targetRotation, eye.object.quaternion, 0.08);
     }
 
     // Pupil dilation based on camera's x position
     const maxXPos = Math.cos(Math.PI/3) * 170; // cos(Max rotation) * camera distance
     const amount = Math.abs(position.x) / maxXPos;
-    this.setPupilDilationBoth(lerp(-0.8, 1, amount));
+    this.setPupilDilationBoth(lerp(-0.8, 1, 1 - amount));
   }
 
   setMouthOpen(amount: number) {

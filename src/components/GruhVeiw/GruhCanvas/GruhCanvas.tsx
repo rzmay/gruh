@@ -29,12 +29,17 @@ function GruhCanvas({ character = CharacterEnum.Gruh }): React.ReactElement {
     }
   }, []);
 
-  useEffect(() => {
+  function cameraControls() {
     if (gruhScene !== undefined) {
       const scene = gruhScene as GruhScene;
       if (scene !== undefined && scene.camera !== undefined) scene.camera.mouseControl = focusState;
     }
-  }, [focusState]);
+  }
+
+  useEffect(cameraControls, [focusState]);
+
+  // Call immediately in case scene has already been initialized
+  cameraControls();
 
   return (
     <div

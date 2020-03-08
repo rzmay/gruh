@@ -4,15 +4,22 @@ import { ObjectSource } from './ModifierStack';
 class MeshObject implements ObjectSource {
 
   object: THREE.Object3D;
-  mesh: THREE.Mesh = new THREE.Mesh();
+
+  // Store each direct child mesh for shape keys
+  meshList: THREE.Mesh[] = [];
 
   constructor(object: THREE.Object3D) {
     this.object = object;
 
-    this.object.traverse((node) => {
+    // Add self if mesh
+    if (object instanceof THREE.Mesh) {
+      this.meshList.push(object as THREE.Mesh);
+    }
+
+    this.object.children.forEach((node) => {
       if (node instanceof THREE.Mesh) {
-        // If mesh not already found, set mesh & deform
-        this.mesh = this.mesh || node as THREE.Mesh;
+        // Add to mesh list
+        this.meshList.push(node as THREE.Mesh);
       }
     });
   }
@@ -28,18 +35,19 @@ class MeshObject implements ObjectSource {
   }
 
   setMorphTargetInfluenceIndex(index: number, amount: number) {
-    if (this.mesh == undefined || this.mesh.morphTargetInfluences == undefined) return;
-    this.mesh.morphTargetInfluences[index] = amount;
+    this.meshList.forEach((mesh) => {
+      if (mesh.morphTargetInfluences == undefined) return;
+      mesh.morphTargetInfluences[index] = amount;
+    });
   }
 
-  // This does not work, but morph target documentation is limited so I'm not sure if it actually should
   setMorphTargetInfluence(name: string, amount: number) {
-    if (this.mesh == undefined || this.mesh.morphTargetDictionary == undefined || this.mesh.morphTargetInfluences == undefined) return;
-    if (this.mesh.morphTargetDictionary.hasOwnProperty(name)) {
-      this.mesh.morphTargetInfluences[this.mesh.morphTargetDictionary[name]] = amount;
-    }
-
-    console.log(`Setting ${name}: ${amount}`);
+    this.meshList.forEach((mesh) => {
+      if (mesh == undefined || mesh.morphTargetDictionary == undefined || mesh.morphTargetInfluences == undefined) return;
+      if (mesh.morphTargetDictionary.hasOwnProperty(name)) {
+        mesh.morphTargetInfluences[mesh.morphTargetDictionary[name]] = amount;
+      }
+    });
   }
 }
 

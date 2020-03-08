@@ -1,0 +1,26 @@
+.upload-form-container {
+
+  margin-top: 3vh;
+
+  h1 {
+    color: #bb0000
+  }
+
+  .upload-icon {
+    height: 8em;
+  }
+
+  .file-form {
+
+    &:focus~.custom-file-label {
+      border-color: #bb0000;
+      box-shadow: 0 0 0 0.2rem #bb000044;
+    }
+  }
+
+  input:focus {
+    border-color: #bb0000;
+    box-shadow: 0 0 0 0.2rem #bb000044;
+  }
+
+}

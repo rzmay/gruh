@@ -5,6 +5,8 @@ class GruhCamera {
   camera: THREE.PerspectiveCamera;
   mouseControl: boolean;
 
+  backLight: THREE.SpotLight;
+
   targetRotationAmount: THREE.Vector3 = new THREE.Vector3(0, 0, 0); // Numbers between -1 and 1
   private _currentRotation: THREE.Quaternion = new THREE.Quaternion();
 
@@ -35,6 +37,10 @@ class GruhCamera {
 
     this.camera = camera;
     this.mouseControl = mouseControl;
+
+    // Add back light (dependent on camera)
+    this.backLight = new THREE.SpotLight(0xc0c0c0, 0.7);
+    scene.add(this.backLight);
 
     window.addEventListener('mousemove', (e) => {
       if (!this.mouseControl) return;
@@ -70,8 +76,13 @@ class GruhCamera {
     newPosition.applyQuaternion(this._currentRotation);
 
     this.camera.position.copy(newPosition);
-
     this.camera.lookAt(new THREE.Vector3(0, 0, 0));
+
+    let backLightPosition = new THREE.Vector3(-170, 0, 0);
+    backLightPosition.applyQuaternion(this._currentRotation);
+
+    this.backLight.position.copy(backLightPosition);
+    this.backLight.lookAt(new THREE.Vector3(0, 0, 0));
   }
 }
 
