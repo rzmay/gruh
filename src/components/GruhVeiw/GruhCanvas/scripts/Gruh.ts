@@ -4,7 +4,7 @@ import { SubdivisionModifier } from 'three/examples/jsm/modifiers/SubdivisionMod
 import GruhMaterials from './GruhMaterials';
 import MeshObject from './MeshObject';
 import { ModifierStack } from './ModifierStack';
-import lerp from 'lerp';
+import lerp = THREE.MathUtils.lerp;
 
 class Gruh {
 
