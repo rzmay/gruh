@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import Particle from './Particle';
 
 interface EmissionSettings {
-    
+
 }
 
 interface ParticleSystemSettings {
