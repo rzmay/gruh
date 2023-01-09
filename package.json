@@ -21,7 +21,7 @@
     "express": "~4.16.0",
     "express-fileupload": "1.1.5",
     "express-form-data": "2.0.10",
-    "firebase-admin": "8.3.0",
+    "firebase-admin": "11.4.1",
     "formidable": "1.2.1",
     "fs": "0.0.1-security",
     "get-audio-duration": "1.0.0",
